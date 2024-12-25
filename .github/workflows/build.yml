@@ -1,0 +1,40 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ] 
+  workflow_dispatch:
+
+env:
+    PICO_SDK_PATH: "/tmp/deps/pico-sdk"
+
+jobs:
+  build_firmware:
+    runs-on: ubuntu-latest
+    container: dtrochow/ledrgb:pico_v3
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+    - name: Clone pico-sdk
+      run: |
+        git clone https://github.com/raspberrypi/pico-sdk.git /tmp/deps/pico-sdk
+        cd /tmp/deps/pico-sdk
+        git submodule update --init --recursive
+
+    - name: Build 3-key firmware
+      working-directory: firmware
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make -j8 
+    
+    - name: Upload firmware artifact
+      uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
+      with:
+        name: firmware
+        path: firmware/build/*.uf2
