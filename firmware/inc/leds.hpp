@@ -12,21 +12,18 @@ struct Led {
     uint8_t green;
     uint8_t blue;
 
-    Led(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0) : red(r), green(g), blue(b) {}
+    Led(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0) : red(r), green(g), blue(b) {
+    }
 };
 
-enum Color {
-    Red,
-    Green,
-    Blue,
-    None
-};
+enum Color { Red, Green, Blue, None };
 
 class Leds {
-public:
+    public:
     Leds(uint leds_count, PIO pio = pio0, uint pin = DEFAULT_LED_PIN, float freq = DEFAULT_FREQ);
     ~Leds() {};
-private:
+
+    private:
     uint leds_count;
     float w_freq;
     uint w_pin;
@@ -34,7 +31,8 @@ private:
     PIO pio;
     uint sm;
     std::vector<Led> leds;
-public:
+
+    public:
     void init();
     void set_led_color(uint led_id, Color color, bool r = false);
     void set_all_color(Color color, bool r = false);
@@ -42,6 +40,7 @@ public:
     void blink(Color color, uint count, float freq = 1);
     void refresh();
     void disable_all(bool r = false);
-private:
+
+    private:
     void push_led(const Led& led);
 };
