@@ -7,13 +7,20 @@ set(src_dir ${CMAKE_CURRENT_LIST_DIR}/src)
 
 include(${cmake_files}/pico_sdk_import.cmake)
 
-project(${project_name})
+project(${project_name} C CXX ASM)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE Debug)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 pico_sdk_init()
 
 add_executable(${project_name}
     ${src_dir}/main.cpp
     ${src_dir}/usb_descriptors.cpp
+    ${src_dir}/leds.cpp
 )
 
 pico_generate_pio_header(${project_name} ${cmake_files}/ws2812.pio)
