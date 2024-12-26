@@ -3,13 +3,11 @@
 #include <string.h>
 
 #include "bsp/board_api.h"
-#include "hardware/pio.h"
-#include "ws2812.pio.h"
 #include "usb_descriptors.h"
 
-#define LED_PIN 18      // GPIO Pin for WS2812 data
-#define NUM_LEDS 3      // Number of LEDs in the strip
-#define FREQ 800000     // WS2812 frequency (800kHz)
+#include "leds.hpp"
+
+#define LEDS_COUNT 3
 
 #define BUTTON_A_GPIO 12
 #define BUTTON_B_GPIO 13
@@ -31,23 +29,23 @@ void init_gpio_pins() {
 
 void hid_task(void);
 
-void set_led_color(PIO pio, uint sm, uint32_t color) {
-    pio_sm_put_blocking(pio, sm, color << 8u);
-}
-
-PIO pio = pio0;
-uint sm = 0;
-
 int main(void)
 {
-  uint offset = pio_add_program(pio, &ws2812_program);
-  ws2812_program_init(pio, sm, offset, LED_PIN, FREQ, false);
+  Leds leds(LEDS_COUNT);
+  leds.init();
 
-  uint32_t red = 0x00FF0000;
-  for (int i = 0; i < NUM_LEDS; i++) {
-      set_led_color(pio, sm, red);
-  }
-  sleep_ms(3000);
+  leds.set_led_color(0, Color::Red);
+  leds.set_led_color(1, Color::Green);
+  leds.set_led_color(2, Color::Blue);
+  leds.refresh();
+
+  sleep_ms(1000);
+
+  leds.disable_all(true);
+
+  sleep_ms(1000);
+
+  leds.blink(1, Color::Green, 2);
 
   init_gpio_pins();
   tud_init(BOARD_TUD_RHPORT);
@@ -63,20 +61,7 @@ int main(void)
 //--------------------------------------------------------------------+
 
 // Invoked when device is mounted
-void tud_mount_cb(void)
-{
-  uint32_t green = 0x0000FF00;
-  for (int i = 0; i < 5; i ++) {
-    for (int i = 0; i < NUM_LEDS; i++) {
-        set_led_color(pio, sm, green);
-    }
-    sleep_ms(500);
-    for (int i = 0; i < NUM_LEDS; i++) {
-        set_led_color(pio, sm, 0x0);
-    }
-    sleep_ms(500);
-  }
-}
+void tud_mount_cb(void) {}
 
 // Invoked when device is unmounted
 void tud_umount_cb(void) {}
