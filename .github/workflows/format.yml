@@ -1,0 +1,27 @@
+name: clang-format Check
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ] 
+  workflow_dispatch:
+
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path:
+          - check: 'firmware'
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+    - name: Run clang-format style check
+      uses: jidicula/clang-format-action@d05cecd4a1a5b7e64c22f5a468456135a43f13f6 # v4.14.0
+      with:
+        clang-format-version: '19'
+        check-path: ${{ matrix.path['check'] }}
+        exclude-regex: ${{ matrix.path['exclude'] }}
