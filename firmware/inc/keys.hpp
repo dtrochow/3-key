@@ -1,40 +1,24 @@
 #pragma once
 
 #include <map>
-#include <variant>
 #include <vector>
 
-#include "class/hid/hid.h"
-#include "pico/stdlib.h"
-
-enum Key : uint8_t {
-    C    = HID_KEY_C,
-    V    = HID_KEY_V,
-    NONE = HID_KEY_NONE,
-};
-
-enum Modifier : uint8_t {
-    LEFT_CMD  = KEYBOARD_MODIFIER_LEFTGUI,
-    LEFT_CTRL = KEYBOARD_MODIFIER_LEFTCTRL,
-};
-
-using KeyOrModifier = std::variant<Key, Modifier>;
-
-struct KeyConfig {
-    uint gpio;
-    KeyOrModifier value;
-};
+#include "config.hpp"
 
 class Keys {
     public:
-    explicit Keys(const std::vector<KeyConfig>& key_configs);
+    explicit Keys(const std::vector<ButtonConfig>& key_configs);
     ~Keys() = default;
 
     private:
-    std::map<KeyOrModifier, uint> keys;
+    std::map<Button, ButtonConfig> keys;
 
     public:
     void init();
+    bool is_btn_pressed(const Button& btn) const;
     Key get_pressed_key() const;
     uint8_t get_modifier_flags() const;
+    uint get_btn_id(const Button& btn) const;
+    std::vector<Button> get_btns() const;
+    Color get_btn_color(const Button& btn) const;
 };

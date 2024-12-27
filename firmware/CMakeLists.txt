@@ -35,6 +35,7 @@ target_link_libraries(${project_name}
     hardware_pio 
     tinyusb_device 
     tinyusb_board
+    pico_multicore
 )
 
 pico_add_extra_outputs(${project_name})
