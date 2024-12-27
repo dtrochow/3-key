@@ -4,40 +4,48 @@
 
 #include "bsp/board_api.h"
 #include "class/hid/hid.h"
+#include "pico/multicore.h"
+#include "pico/stdlib.h"
 #include "usb_descriptors.h"
 
 #include "keys.hpp"
 #include "leds.hpp"
 
-#define BUTTON_LEFT_GPIO 12
+#define BUTTON_LEFT_GPIO 14
 #define BUTTON_MIDDLE_GPIO 13
-#define BUTTON_RIGHT_GPIO 14
+#define BUTTON_RIGHT_GPIO 12
 
 void hid_task(const Keys& keys);
+void leds_task(Leds& leds, const Keys& keys);
+
+Leds* g_leds = nullptr;
+Keys* g_keys = nullptr;
+
+void leds_task_on_core1() {
+    while (1) {
+        leds_task(*g_leds, *g_keys);
+        sleep_ms(50);
+    }
+}
 
 int main(void) {
-    const std::vector<KeyConfig> key_configs = {
-        { BUTTON_RIGHT_GPIO, Modifier::LEFT_CMD },
-        { BUTTON_MIDDLE_GPIO, Key::C },
-        { BUTTON_LEFT_GPIO, Key::V },
+    const std::vector<ButtonConfig> key_configs = {
+        { 0, BUTTON_RIGHT_GPIO, Key::V, Color::Red },
+        { 1, BUTTON_MIDDLE_GPIO, Key::C, Color::Green },
+        { 2, BUTTON_LEFT_GPIO, Modifier::LEFT_CMD, Color::Blue },
     };
 
     Leds leds(key_configs.size());
     leds.init();
 
-    leds.set_led_color(0, Color::Red);
-    leds.set_led_color(1, Color::Green);
-    leds.set_led_color(2, Color::Blue);
-    leds.refresh();
-
-    sleep_ms(1000);
-
-    leds.disable_all(true);
-
     Keys keys(key_configs);
     keys.init();
 
     tud_init(BOARD_TUD_RHPORT);
+
+    g_keys = &keys;
+    g_leds = &leds;
+    multicore_launch_core1(leds_task_on_core1);
 
     while (1) {
         tud_task();
@@ -46,15 +54,33 @@ int main(void) {
 }
 
 //--------------------------------------------------------------------+
+// LEDs task
+//--------------------------------------------------------------------+
+
+void leds_task(Leds& leds, const Keys& keys) {
+    const std::vector<Button> buttons = keys.get_btns();
+    for (const auto& btn : buttons) {
+        const uint btn_id     = keys.get_btn_id(btn);
+        const Color btn_color = keys.get_btn_color(btn);
+        if (keys.is_btn_pressed(btn)) {
+            leds.set_led_color(btn_id, btn_color);
+        } else {
+            leds.set_led_color(btn_id, Color::None);
+        }
+    }
+    leds.refresh();
+}
+
+//--------------------------------------------------------------------+
 // Device callbacks
 //--------------------------------------------------------------------+
 
 // Invoked when device is mounted
-void tud_mount_cb(void) {
+void tud_mount_cb() {
 }
 
 // Invoked when device is unmounted
-void tud_umount_cb(void) {
+void tud_umount_cb() {
 }
 
 // Invoked when usb bus is suspended
@@ -65,7 +91,7 @@ void tud_suspend_cb(bool remote_wakeup_en) {
 }
 
 // Invoked when usb bus is resumed
-void tud_resume_cb(void) {
+void tud_resume_cb() {
 }
 
 //--------------------------------------------------------------------+
