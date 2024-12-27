@@ -3,34 +3,26 @@
 #include <string.h>
 
 #include "bsp/board_api.h"
+#include "class/hid/hid.h"
 #include "usb_descriptors.h"
 
+#include "keys.hpp"
 #include "leds.hpp"
 
-#define LEDS_COUNT 3
+#define BUTTON_LEFT_GPIO 12
+#define BUTTON_MIDDLE_GPIO 13
+#define BUTTON_RIGHT_GPIO 14
 
-#define BUTTON_A_GPIO 12
-#define BUTTON_B_GPIO 13
-#define BUTTON_C_GPIO 14
-
-void init_gpio_pins() {
-    gpio_init(BUTTON_A_GPIO);
-    gpio_set_dir(BUTTON_A_GPIO, GPIO_IN);
-    gpio_pull_up(BUTTON_A_GPIO);
-
-    gpio_init(BUTTON_B_GPIO);
-    gpio_set_dir(BUTTON_B_GPIO, GPIO_IN);
-    gpio_pull_up(BUTTON_B_GPIO);
-
-    gpio_init(BUTTON_C_GPIO);
-    gpio_set_dir(BUTTON_C_GPIO, GPIO_IN);
-    gpio_pull_up(BUTTON_C_GPIO);
-}
-
-void hid_task(void);
+void hid_task(const Keys& keys);
 
 int main(void) {
-    Leds leds(LEDS_COUNT);
+    const std::vector<KeyConfig> key_configs = {
+        { BUTTON_RIGHT_GPIO, Modifier::LEFT_CMD },
+        { BUTTON_MIDDLE_GPIO, Key::C },
+        { BUTTON_LEFT_GPIO, Key::V },
+    };
+
+    Leds leds(key_configs.size());
     leds.init();
 
     leds.set_led_color(0, Color::Red);
@@ -42,16 +34,14 @@ int main(void) {
 
     leds.disable_all(true);
 
-    sleep_ms(1000);
+    Keys keys(key_configs);
+    keys.init();
 
-    leds.blink(1, Color::Green, 2);
-
-    init_gpio_pins();
     tud_init(BOARD_TUD_RHPORT);
 
     while (1) {
-        tud_task(); // tinyusb device task
-        hid_task();
+        tud_task();
+        hid_task(keys);
     }
 }
 
@@ -82,7 +72,7 @@ void tud_resume_cb(void) {
 // USB HID
 //--------------------------------------------------------------------+
 
-static void send_hid_report(uint8_t report_id, uint32_t btn) {
+static void send_hid_report(uint8_t report_id, uint8_t key, const Keys& keys) {
     if (!tud_hid_ready())
         return;
 
@@ -90,11 +80,12 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
         // use to avoid send multiple consecutive zero report for keyboard
         static bool has_keyboard_key = false;
 
-        if (btn) {
-            uint8_t keycode[6] = { 0 };
-            keycode[0]         = 0x15;
+        if (key) {
+            uint8_t keycode[6]     = {};
+            keycode[0]             = key;
+            const uint8_t modifier = keys.get_modifier_flags();
 
-            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
+            tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
             has_keyboard_key = true;
         } else {
             // send empty key report if previously has key pressed
@@ -105,24 +96,20 @@ static void send_hid_report(uint8_t report_id, uint32_t btn) {
     }
 }
 
-bool is_button_pushed() {
-    return !gpio_get(BUTTON_A_GPIO);
-}
-
-void hid_task(void) {
-    const uint32_t interval_ms = 10;
-    static uint32_t start_ms   = 0;
+void hid_task(const Keys& keys) {
+    constexpr uint32_t interval_ms = 10;
+    static uint32_t start_ms       = 0;
 
     if (board_millis() - start_ms < interval_ms)
         return;
     start_ms += interval_ms;
 
-    uint32_t const btn = is_button_pushed();
+    const uint32_t key = keys.get_pressed_key();
 
-    if (tud_suspended() && btn) {
+    if (tud_suspended() && (key != Key::NONE)) {
         tud_remote_wakeup();
     } else {
-        send_hid_report(REPORT_ID_KEYBOARD, btn);
+        send_hid_report(REPORT_ID_KEYBOARD, key, keys);
     }
 }
 

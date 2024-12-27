@@ -21,7 +21,7 @@ enum Color { Red, Green, Blue, None };
 class Leds {
     public:
     Leds(uint leds_count, PIO pio = pio0, uint pin = DEFAULT_LED_PIN, float freq = DEFAULT_FREQ);
-    ~Leds() {};
+    ~Leds() = default;
 
     private:
     uint leds_count;
