@@ -21,6 +21,7 @@ add_executable(${project_name}
     ${src_dir}/main.cpp
     ${src_dir}/usb_descriptors.cpp
     ${src_dir}/leds.cpp
+    ${src_dir}/keys.cpp
 )
 
 pico_generate_pio_header(${project_name} ${cmake_files}/ws2812.pio)
