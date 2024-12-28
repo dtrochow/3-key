@@ -1,0 +1,71 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '20 5 * * 5'
+  workflow_dispatch:
+
+env:
+    PICO_SDK_PATH: "/tmp/deps/pico-sdk"
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: 'ubuntu-latest'
+    container: dtrochow/3-key:v0.0.1
+
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # required to fetch internal or private CodeQL packs
+      packages: read
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: c-cpp
+          build-mode: manual
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+    - name: Mark repository as safe
+      run: git config --global --add safe.directory /__w/3-key/3-key
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+
+    - name: Clone pico-sdk
+      run: |
+        git clone https://github.com/raspberrypi/pico-sdk.git /tmp/deps/pico-sdk
+        cd /tmp/deps/pico-sdk
+        git submodule update --init --recursive
+
+    - name: Build firmware
+      if: matrix.build-mode == 'manual'
+      shell: bash
+      working-directory: firmware
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make -j8 
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
