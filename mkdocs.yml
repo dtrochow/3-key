@@ -1,0 +1,59 @@
+site_name: 3-key
+site_url: https://3-key.dtrochow.ovh
+theme:
+  name: material
+  language: en
+  logo: assets/images/logo.png
+  features:
+    - navigation.sections # indexes
+  font:
+    text: Inter
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: light green
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: green
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - attr_list
+  - tables
+plugins:
+  - blog:
+      enabled: true
+      blog_dir: blog
+      post_date_format: full
+      post_url_date_format: yyyy/MM/dd
+  - mkdocs-video:
+      is_video: True
+      video_muted: True
+      video_controls: True
+      css_style:
+        width: "100%"
+  - search
+  - tags
+  - mkdocs-pdf
+  - table-reader:
+      data_path: "docs"
+      allow_missing_files: False
+      select_readers:
+        - read_csv
+        - read_json
+        - read_excel
+nav:
+  - Home: index.md
+  - Hardware: hardware.md
+  - Development: development.md
+  - Blog: blog/index.md
+exclude_docs: README.md
