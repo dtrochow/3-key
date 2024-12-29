@@ -97,7 +97,7 @@ enum {
 #define EPNUM_CDC_0_NOTIF 0x81
 #define EPNUM_CDC_0_OUT 0x02
 #define EPNUM_CDC_0_IN 0x82
-#define EPNUM_HID 0x81
+#define EPNUM_HID 0x83
 
 
 uint8_t const desc_configuration[] = {
@@ -110,17 +110,6 @@ uint8_t const desc_configuration[] = {
     // HID: Keyboard
     TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_KEYBOARD, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5),
 };
-
-// uint8_t const desc_configuration[] = {
-//     // Configuration descriptor
-//     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
-
-//     // CDC Descriptor
-//     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 0, 0x81, 8, 0x02, 0x82, 64),
-
-//     // HID Descriptor
-//     TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5),
-// };
 
 #if TUD_OPT_HIGH_SPEED
 // Per USB specs: high speed capable device must report device_qualifier and

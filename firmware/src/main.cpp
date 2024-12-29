@@ -9,6 +9,7 @@
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "usb_descriptors.h"
+#include <hardware/flash.h>
 
 #include "keys.hpp"
 #include "leds.hpp"
@@ -31,7 +32,71 @@ void leds_task_on_core1() {
     }
 }
 
+#include <cstring>
+#include <iostream>
+#include <streambuf>
+
+// Custom stream buffer
+class USBStreamBuf : public std::streambuf {
+    private:
+    static constexpr size_t BufferSize = 128;
+    char buffer[BufferSize];
+
+    protected:
+    // Flush buffer to the USB CDC device
+    int flushBuffer() {
+        size_t len = pptr() - pbase();
+        if (len > 0) {
+            tud_cdc_write(buffer, len);
+            tud_cdc_write_flush();         // Ensure the data is sent immediately
+            pbump(-static_cast<int>(len)); // Reset the pointer
+        }
+        return len;
+    }
+
+    // Override xsputn to write sequences of characters
+    virtual std::streamsize xsputn(const char* s, std::streamsize count) override {
+        std::streamsize written = 0;
+        while (count > 0) {
+            size_t space   = epptr() - pptr();
+            size_t toWrite = std::min<size_t>(space, count);
+            std::memcpy(pptr(), s, toWrite);
+            pbump(static_cast<int>(toWrite));
+            written += toWrite;
+            s += toWrite;
+            count -= toWrite;
+
+            // If the buffer is full, flush it
+            if (space == toWrite) {
+                flushBuffer();
+            }
+        }
+        return written;
+    }
+
+    // Override overflow for single character writes
+    virtual int overflow(int ch) override {
+        if (ch != EOF) {
+            char c = static_cast<char>(ch);
+            if (xsputn(&c, 1) == 1) {
+                return ch;
+            }
+        }
+        return EOF;
+    }
+
+    public:
+    USBStreamBuf() {
+        setp(buffer, buffer + BufferSize - 1); // Reserve space for null terminator
+    }
+
+    ~USBStreamBuf() {
+        flushBuffer(); // Flush any remaining data
+    }
+};
+
 int main(void) {
+
     const std::vector<ButtonConfig> key_configs = {
         { 0, BUTTON_RIGHT_GPIO, Key::V, Color::Red },
         { 1, BUTTON_MIDDLE_GPIO, Key::C, Color::Green },
@@ -46,6 +111,14 @@ int main(void) {
 
     tud_init(BOARD_TUD_RHPORT);
 
+    USBStreamBuf usbBuf;
+    std::ostream usbStream(&usbBuf);
+
+    // Example: Redirect std::cout to USBStreamBuf
+    std::streambuf* originalBuf = std::cout.rdbuf(); // Save the original buffer
+    std::cout.rdbuf(&usbBuf);
+
+
     g_keys = &keys;
     g_leds = &leds;
     multicore_launch_core1(leds_task_on_core1);
@@ -53,7 +126,7 @@ int main(void) {
     while (1) {
         tud_task();
         hid_task(keys);
-        // cdc_task();
+        cdc_task();
     }
 }
 
@@ -102,6 +175,14 @@ void tud_resume_cb() {
 // USB HID
 //--------------------------------------------------------------------+
 
+extern "C" int _write(int fd, const void* buf, size_t count) {
+    if (tud_cdc_connected()) {
+        tud_cdc_write(buf, count);
+        tud_cdc_write_flush();
+    }
+    return count;
+}
+
 static void send_hid_report(uint8_t report_id, uint8_t key, const Keys& keys) {
     if (!tud_hid_ready())
         return;
@@ -115,6 +196,19 @@ static void send_hid_report(uint8_t report_id, uint8_t key, const Keys& keys) {
             keycode[0]             = key;
             const uint8_t modifier = keys.get_modifier_flags();
 
+            uint32_t offset = 0x10180000;                     // Correct offset type
+            int* ptr        = reinterpret_cast<int*>(offset); // Cast to pointer type correctly
+            std::cout << "X0: " << *ptr << std::endl;         // Dereference pointer to print value
+            // (*ptr)++;                                 // Increment the value at the memory
+            // address std::cout << "X1: " << *ptr << std::endl; // Print the updated value
+
+            // // Write the updated value to flash
+            // flash_range_program(offset, reinterpret_cast<uint8_t*>(ptr), sizeof(int));
+            // uint32_t ints = save_and_disable_interrupts();
+            // flash_range_erase(offset, sizeof(int));
+            // restore_interrupts(ints);
+
+            std::cout << "TEST" << std::endl;
             tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
             has_keyboard_key = true;
         } else {
@@ -191,13 +285,6 @@ void cdc_task() {
     }
 }
 
-extern "C" int _write(int fd, const void* buf, size_t count) {
-    if (tud_cdc_connected()) {
-        tud_cdc_write(buf, count);
-        tud_cdc_write_flush();
-    }
-    return count;
-}
 
 void tud_cdc_line_coding_cb(__unused uint8_t itf, cdc_line_coding_t const* p_line_coding) {
     if (p_line_coding->bit_rate == 1200) {
