@@ -3,7 +3,9 @@
 #include <string.h>
 
 #include "bsp/board_api.h"
+#include "class/cdc/cdc_device.h"
 #include "class/hid/hid.h"
+#include "pico/bootrom.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "usb_descriptors.h"
@@ -17,6 +19,7 @@
 
 void hid_task(const Keys& keys);
 void leds_task(Leds& leds, const Keys& keys);
+void cdc_task();
 
 Leds* g_leds = nullptr;
 Keys* g_keys = nullptr;
@@ -50,6 +53,7 @@ int main(void) {
     while (1) {
         tud_task();
         hid_task(keys);
+        // cdc_task();
     }
 }
 
@@ -175,4 +179,29 @@ uint16_t bufsize) {
     (void)report_type;
     (void)buffer;
     (void)bufsize;
+}
+
+void cdc_task() {
+    if (tud_cdc_available()) {
+        uint8_t buf[64];
+        uint32_t count = tud_cdc_read(buf, sizeof(buf));
+        // Echo back received data
+        tud_cdc_write(buf, count);
+        tud_cdc_write_flush();
+    }
+}
+
+extern "C" int _write(int fd, const void* buf, size_t count) {
+    if (tud_cdc_connected()) {
+        tud_cdc_write(buf, count);
+        tud_cdc_write_flush();
+    }
+    return count;
+}
+
+void tud_cdc_line_coding_cb(__unused uint8_t itf, cdc_line_coding_t const* p_line_coding) {
+    if (p_line_coding->bit_rate == 1200) {
+#define PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK 0u
+        reset_usb_boot(1u, PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK); // or 0u
+    }
 }

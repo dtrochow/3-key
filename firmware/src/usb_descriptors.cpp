@@ -35,10 +35,10 @@
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
 #define _PID_MAP(itf, n) ((CFG_TUD_##itf) << (n))
-#define USB_PID 0x1234
+#define USB_PID 0x000A
 
-#define USB_VID 0xCafe
-#define USB_BCD 0x0200
+#define USB_VID 0x2E8A
+#define USB_BCD 0x0210
 
 //--------------------------------------------------------------------+
 // Device Descriptors
@@ -46,9 +46,9 @@
 tusb_desc_device_t const desc_device = { .bLength = sizeof(tusb_desc_device_t),
     .bDescriptorType                              = TUSB_DESC_DEVICE,
     .bcdUSB                                       = USB_BCD,
-    .bDeviceClass                                 = 0x00,
-    .bDeviceSubClass                              = 0x00,
-    .bDeviceProtocol                              = 0x00,
+    .bDeviceClass                                 = TUSB_CLASS_MISC,
+    .bDeviceSubClass                              = MISC_SUBCLASS_COMMON,
+    .bDeviceProtocol                              = MISC_PROTOCOL_IAD,
     .bMaxPacketSize0                              = CFG_TUD_ENDPOINT0_SIZE,
 
     .idVendor  = USB_VID,
@@ -85,21 +85,42 @@ uint8_t const* tud_hid_descriptor_report_cb(uint8_t instance) {
 // Configuration Descriptor
 //--------------------------------------------------------------------+
 
-enum { ITF_NUM_HID, ITF_NUM_TOTAL };
+enum {
+    ITF_NUM_CDC_0 = 0,  // CDC Control Interface
+    ITF_NUM_CDC_0_DATA, // CDC Data Interface
+    ITF_NUM_HID,
+    ITF_NUM_TOTAL,
+};
 
-#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_HID_DESC_LEN)
 
+#define EPNUM_CDC_0_NOTIF 0x81
+#define EPNUM_CDC_0_OUT 0x02
+#define EPNUM_CDC_0_IN 0x82
 #define EPNUM_HID 0x81
 
+
 uint8_t const desc_configuration[] = {
-    // Config number, interface count, string index, total length, attribute,
-    // power in mA
+    // Configuration descriptor
     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
 
-    // Interface number, string index, protocol, report descriptor len, EP In
-    // address, size & polling interval
-    TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
+    // CDC: Control Interface, Endpoint for Notification
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 0, EPNUM_CDC_0_NOTIF, 8, EPNUM_CDC_0_OUT, EPNUM_CDC_0_IN, CFG_TUD_CDC_EP_BUFSIZE),
+
+    // HID: Keyboard
+    TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_KEYBOARD, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5),
 };
+
+// uint8_t const desc_configuration[] = {
+//     // Configuration descriptor
+//     TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+
+//     // CDC Descriptor
+//     TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, 0, 0x81, 8, 0x02, 0x82, 64),
+
+//     // HID Descriptor
+//     TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5),
+// };
 
 #if TUD_OPT_HIGH_SPEED
 // Per USB specs: high speed capable device must report device_qualifier and
