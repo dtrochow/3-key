@@ -3,17 +3,17 @@
 #include <map>
 #include <vector>
 
-#include "config.hpp"
+#include "buttons_config.hpp"
 
-class Keys {
-    public:
-    explicit Keys(const std::vector<ButtonConfig>& key_configs);
-    ~Keys() = default;
+class Buttons {
+  public:
+    explicit Buttons(const std::vector<ButtonConfig>& key_configs);
+    ~Buttons() = default;
 
-    private:
-    std::map<Button, ButtonConfig> keys;
+  private:
+    std::map<Button, ButtonConfig> buttons;
 
-    public:
+  public:
     void init();
     bool is_btn_pressed(const Button& btn) const;
     Key get_pressed_key() const;

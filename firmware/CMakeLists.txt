@@ -11,31 +11,30 @@ project(${project_name} C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 pico_sdk_init()
 
 add_executable(${project_name}
-    ${src_dir}/main.cpp
-    ${src_dir}/usb_descriptors.cpp
-    ${src_dir}/leds.cpp
-    ${src_dir}/keys.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/3-key.cpp
 )
-
-pico_generate_pio_header(${project_name} ${cmake_files}/ws2812.pio)
 
 target_include_directories(${project_name} PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/inc
+        ${CMAKE_CURRENT_LIST_DIR}
 )
+
+add_subdirectory(buttons)
+add_subdirectory(leds)
+add_subdirectory(usb)
 
 target_link_libraries(${project_name} 
     pico_stdlib 
-    hardware_pio 
-    tinyusb_device 
-    tinyusb_board
     pico_multicore
+    buttons
+    leds
+    usb
 )
 
 pico_add_extra_outputs(${project_name})

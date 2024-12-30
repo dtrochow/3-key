@@ -1,0 +1,5 @@
+#pragma once
+
+#define BUTTON_LEFT_GPIO 14
+#define BUTTON_MIDDLE_GPIO 13
+#define BUTTON_RIGHT_GPIO 12

@@ -85,7 +85,10 @@ uint8_t const* tud_hid_descriptor_report_cb(uint8_t instance) {
 // Configuration Descriptor
 //--------------------------------------------------------------------+
 
-enum { ITF_NUM_HID, ITF_NUM_TOTAL };
+enum {
+    ITF_NUM_HID,
+    ITF_NUM_TOTAL,
+};
 
 #define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
 

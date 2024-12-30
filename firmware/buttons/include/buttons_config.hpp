@@ -3,18 +3,8 @@
 #include <variant>
 
 #include "class/hid/hid.h"
+#include "leds_config.hpp"
 #include "pico/stdlib.h"
-
-struct Led {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-
-    Led(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0) : red(r), green(g), blue(b) {
-    }
-};
-
-enum Color { Red, Green, Blue, None };
 
 enum Key : uint8_t {
     C    = HID_KEY_C,
