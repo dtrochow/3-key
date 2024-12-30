@@ -94,10 +94,6 @@ int main(void) {
         tud_task();
         hid_task(keys);
         cdc_task();
-        char buffer[64];
-        snprintf(buffer, sizeof(buffer), "Loaded config: value1=%u, value2=%u\n",
-        config.config_value1, config.config_value2);
-        tud_cdc_write_str(buffer);
     }
 }
 
@@ -233,16 +229,37 @@ uint16_t bufsize) {
     (void)bufsize;
 }
 
+#define INPUT_BUFFER_SIZE 128
+
 void cdc_task() {
-    if (tud_cdc_available()) {
-        uint8_t buf[64];
-        uint32_t count = tud_cdc_read(buf, sizeof(buf));
-        // Echo back received data
-        tud_cdc_write(buf, count);
+    static char input_buffer[INPUT_BUFFER_SIZE];
+    static uint32_t buffer_index = 0;
+
+    while (tud_cdc_available()) {
+        char c = tud_cdc_read_char();
+
+        tud_cdc_write_char(c);
+
+        if (c == '\n' || c == '\r') {
+            input_buffer[buffer_index] = '\0';
+
+            tud_cdc_write_str("\nYou entered: ");
+            tud_cdc_write_str(input_buffer);
+            tud_cdc_write_str("\r\n");
+
+            buffer_index = 0;
+        } else {
+            if (buffer_index < INPUT_BUFFER_SIZE - 1) {
+                input_buffer[buffer_index++] = c;
+            } else {
+                tud_cdc_write_str("\nError: Input too long!\r\n");
+                buffer_index = 0;
+            }
+        }
+
         tud_cdc_write_flush();
     }
 }
-
 
 void tud_cdc_line_coding_cb(__unused uint8_t itf, cdc_line_coding_t const* p_line_coding) {
     if (p_line_coding->bit_rate == 1200) {
