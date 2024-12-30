@@ -19,10 +19,10 @@ void Leds::set_led_color(uint led_id, Color color, bool r) {
         return;
     }
     switch (color) {
-    case Red: leds[led_id] = Led(255, 0, 0); break;
-    case Green: leds[led_id] = Led(0, 255, 0); break;
-    case Blue: leds[led_id] = Led(0, 0, 255); break;
-    case None: leds[led_id] = Led(0, 0, 0); break;
+        case Red: leds[led_id] = Led(255, 0, 0); break;
+        case Green: leds[led_id] = Led(0, 255, 0); break;
+        case Blue: leds[led_id] = Led(0, 0, 255); break;
+        case None: leds[led_id] = Led(0, 0, 0); break;
     }
     if (r)
         refresh();
