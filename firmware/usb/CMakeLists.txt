@@ -2,6 +2,7 @@ set(modulename "usb")
 set(SOURCES 
         hid.cpp
         tud.cpp
+        cdc.cpp
         usb_descriptors.cpp
 )
 add_library(${modulename} ${SOURCES})
