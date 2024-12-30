@@ -2,18 +2,16 @@
 
 #include <vector>
 
-#include "config.hpp"
+#include "buttons.hpp"
 #include "hardware/pio.h"
-
-#define DEFAULT_LED_PIN 18
-#define DEFAULT_FREQ 800000
+#include "leds_config.hpp"
 
 class Leds {
-    public:
+  public:
     Leds(uint leds_count, PIO pio = pio0, uint pin = DEFAULT_LED_PIN, float freq = DEFAULT_FREQ);
     ~Leds() = default;
 
-    private:
+  private:
     uint leds_count;
     float w_freq;
     uint w_pin;
@@ -22,7 +20,7 @@ class Leds {
     uint sm;
     std::vector<Led> leds;
 
-    public:
+  public:
     void init();
     void set_led_color(uint led_id, Color color, bool r = false);
     void set_all_color(Color color, bool r = false);
@@ -31,6 +29,8 @@ class Leds {
     void refresh();
     void disable_all(bool r = false);
 
-    private:
+  private:
     void push_led(const Led& led);
 };
+
+void leds_task(Leds& leds, const Buttons& buttons);

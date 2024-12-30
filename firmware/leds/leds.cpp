@@ -1,4 +1,3 @@
-#include <pico/time.h>
 #include <ranges>
 
 #include "leds.hpp"
@@ -6,8 +5,7 @@
 #include "ws2812.pio.h"
 
 Leds::Leds(uint leds_count, PIO pio, uint pin, float freq)
-: leds_count(leds_count), leds(leds_count, Led(0, 0, 0)), pio(pio), w_pin(pin), w_freq(freq), sm(0) {
-}
+: leds_count(leds_count), leds(leds_count, Led(0, 0, 0)), pio(pio), w_pin(pin), w_freq(freq), sm(0) {}
 
 void Leds::init() {
     offset = pio_add_program(pio, &ws2812_program);
@@ -48,7 +46,7 @@ void Leds::disable_all(bool r) {
 
 void Leds::push_led(const Led& led) {
     uint32_t color = (static_cast<uint32_t>(led.red) << 16) |
-    (static_cast<uint32_t>(led.green) << 8) | (static_cast<uint32_t>(led.blue));
+        (static_cast<uint32_t>(led.green) << 8) | (static_cast<uint32_t>(led.blue));
 
     pio_sm_put_blocking(pio, sm, color << 8u);
 }
@@ -77,4 +75,18 @@ void Leds::blink(uint led_id, Color color, uint count, float freq) {
         set_led_color(led_id, Color::None, true);
         sleep_ms(delay);
     }
+}
+
+void leds_task(Leds& leds, const Buttons& buttons) {
+    const std::vector<Button> btns = buttons.get_btns();
+    for (const auto& btn : btns) {
+        const uint btn_id     = buttons.get_btn_id(btn);
+        const Color btn_color = buttons.get_btn_color(btn);
+        if (buttons.is_btn_pressed(btn)) {
+            leds.set_led_color(btn_id, btn_color);
+        } else {
+            leds.set_led_color(btn_id, Color::None);
+        }
+    }
+    leds.refresh();
 }
