@@ -89,6 +89,32 @@ docker push dtrochow/3-key:v0.0.1
 
 ## Uploading firmware UF2 binary to 3-key
 
+### **Automatically**
+
+**Requirements**
+
+- [Python3](https://www.python.org/downloads/)
+- [Picotool](https://github.com/raspberrypi/picotool)
+
+The 3-key firmware can be build and loaded using `build.py` script.
+
+It will perform the following actions:
+
+- Build firmware (`--clean` parameter will cause re-building all files)
+
+- Below actions will be done only with `--load` parameter 
+    - Reset the RPi Pico device to bootloader
+    - Load the new firmware
+    - Reboot RPi Pico device
+
+**Example usage:**
+
+``` bash
+python3 ./build.py --clean --load
+```
+
+### **Manually**
+
 - Connect the `3-key` RPi Pico device with `BOOT` button pressed
 
 ![BOOT Button](assets/images/boot_button.jpeg)
