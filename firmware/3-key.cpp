@@ -1,6 +1,7 @@
 #include "pico/multicore.h"
 
 #include "buttons.hpp"
+#include "cdc.hpp"
 #include "config.hpp"
 #include "hid.hpp"
 #include "leds.hpp"
@@ -33,10 +34,13 @@ int main(void) {
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
+    CdcDevice cdc;
+
     initialize_tud();
 
     while (1) {
         tud_task();
         hid_task(buttons);
+        cdc.task();
     }
 }
