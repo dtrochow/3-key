@@ -9,7 +9,19 @@
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "usb_descriptors.h"
-#include <hardware/flash.h>
+
+#include "hardware/flash.h"
+#include "hardware/sync.h"
+
+#define FLASH_SIZE (FLASH_SECTOR_SIZE * 4) // FLASH_SECTOR_SIZE - 4096
+#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SIZE)
+#define CONFIG_MAGIC 0xDEADBEEF
+
+typedef struct {
+    uint32_t magic;
+    uint32_t config_value1;
+    uint32_t config_value2;
+} config_t;
 
 #include "keys.hpp"
 #include "leds.hpp"
@@ -17,6 +29,9 @@
 #define BUTTON_LEFT_GPIO 14
 #define BUTTON_MIDDLE_GPIO 13
 #define BUTTON_RIGHT_GPIO 12
+
+void save_config(const config_t* config);
+void load_config(config_t* config);
 
 void hid_task(const Keys& keys);
 void leds_task(Leds& leds, const Keys& keys);
@@ -32,71 +47,7 @@ void leds_task_on_core1() {
     }
 }
 
-#include <cstring>
-#include <iostream>
-#include <streambuf>
-
-// Custom stream buffer
-class USBStreamBuf : public std::streambuf {
-    private:
-    static constexpr size_t BufferSize = 128;
-    char buffer[BufferSize];
-
-    protected:
-    // Flush buffer to the USB CDC device
-    int flushBuffer() {
-        size_t len = pptr() - pbase();
-        if (len > 0) {
-            tud_cdc_write(buffer, len);
-            tud_cdc_write_flush();         // Ensure the data is sent immediately
-            pbump(-static_cast<int>(len)); // Reset the pointer
-        }
-        return len;
-    }
-
-    // Override xsputn to write sequences of characters
-    virtual std::streamsize xsputn(const char* s, std::streamsize count) override {
-        std::streamsize written = 0;
-        while (count > 0) {
-            size_t space   = epptr() - pptr();
-            size_t toWrite = std::min<size_t>(space, count);
-            std::memcpy(pptr(), s, toWrite);
-            pbump(static_cast<int>(toWrite));
-            written += toWrite;
-            s += toWrite;
-            count -= toWrite;
-
-            // If the buffer is full, flush it
-            if (space == toWrite) {
-                flushBuffer();
-            }
-        }
-        return written;
-    }
-
-    // Override overflow for single character writes
-    virtual int overflow(int ch) override {
-        if (ch != EOF) {
-            char c = static_cast<char>(ch);
-            if (xsputn(&c, 1) == 1) {
-                return ch;
-            }
-        }
-        return EOF;
-    }
-
-    public:
-    USBStreamBuf() {
-        setp(buffer, buffer + BufferSize - 1); // Reserve space for null terminator
-    }
-
-    ~USBStreamBuf() {
-        flushBuffer(); // Flush any remaining data
-    }
-};
-
 int main(void) {
-
     const std::vector<ButtonConfig> key_configs = {
         { 0, BUTTON_RIGHT_GPIO, Key::V, Color::Red },
         { 1, BUTTON_MIDDLE_GPIO, Key::C, Color::Green },
@@ -111,13 +62,29 @@ int main(void) {
 
     tud_init(BOARD_TUD_RHPORT);
 
-    USBStreamBuf usbBuf;
-    std::ostream usbStream(&usbBuf);
+    config_t config;
+    load_config(&config);
 
-    // Example: Redirect std::cout to USBStreamBuf
-    std::streambuf* originalBuf = std::cout.rdbuf(); // Save the original buffer
-    std::cout.rdbuf(&usbBuf);
+    if (config.magic != CONFIG_MAGIC) {
+        tud_cdc_write_str("Invalid or uninitialized config, initializing...\n");
 
+        config.magic         = CONFIG_MAGIC;
+        config.config_value1 = 42;
+        config.config_value2 = 100;
+
+        save_config(&config);
+    } else {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "Loaded config: value1=%u, value2=%u\n",
+        config.config_value1, config.config_value2);
+        tud_cdc_write_str(buffer);
+    }
+
+    config.config_value1 += 1;
+    config.config_value2 -= 1;
+    save_config(&config);
+
+    tud_cdc_write_str("Updated config saved.\n");
 
     g_keys = &keys;
     g_leds = &leds;
@@ -127,6 +94,10 @@ int main(void) {
         tud_task();
         hid_task(keys);
         cdc_task();
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer), "Loaded config: value1=%u, value2=%u\n",
+        config.config_value1, config.config_value2);
+        tud_cdc_write_str(buffer);
     }
 }
 
@@ -196,19 +167,6 @@ static void send_hid_report(uint8_t report_id, uint8_t key, const Keys& keys) {
             keycode[0]             = key;
             const uint8_t modifier = keys.get_modifier_flags();
 
-            uint32_t offset = 0x10180000;                     // Correct offset type
-            int* ptr        = reinterpret_cast<int*>(offset); // Cast to pointer type correctly
-            std::cout << "X0: " << *ptr << std::endl;         // Dereference pointer to print value
-            // (*ptr)++;                                 // Increment the value at the memory
-            // address std::cout << "X1: " << *ptr << std::endl; // Print the updated value
-
-            // // Write the updated value to flash
-            // flash_range_program(offset, reinterpret_cast<uint8_t*>(ptr), sizeof(int));
-            // uint32_t ints = save_and_disable_interrupts();
-            // flash_range_erase(offset, sizeof(int));
-            // restore_interrupts(ints);
-
-            std::cout << "TEST" << std::endl;
             tud_hid_keyboard_report(REPORT_ID_KEYBOARD, modifier, keycode);
             has_keyboard_key = true;
         } else {
@@ -291,4 +249,22 @@ void tud_cdc_line_coding_cb(__unused uint8_t itf, cdc_line_coding_t const* p_lin
 #define PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK 0u
         reset_usb_boot(1u, PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK); // or 0u
     }
+}
+
+void save_config(const config_t* config) {
+    uint8_t temp[FLASH_PAGE_SIZE];
+
+    // Ensure we only write complete pages
+    memcpy(temp, config, sizeof(config_t));
+    memset(temp + sizeof(config_t), 0xFF, FLASH_PAGE_SIZE - sizeof(config_t));
+
+    uint32_t interrupts = save_and_disable_interrupts();
+    flash_range_erase(FLASH_TARGET_OFFSET & ~(FLASH_SECTOR_SIZE - 1), FLASH_SECTOR_SIZE);
+    flash_range_program(FLASH_TARGET_OFFSET, temp, FLASH_PAGE_SIZE);
+    restore_interrupts(interrupts);
+}
+
+void load_config(config_t* config) {
+    const uint8_t* flash_ptr = (const uint8_t*)(XIP_BASE + FLASH_TARGET_OFFSET);
+    memcpy(config, flash_ptr, sizeof(config_t));
 }
