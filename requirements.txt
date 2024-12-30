@@ -7,3 +7,4 @@ pymdown-extensions==10.9
 mkdocs-table-reader-plugin==3.1.0
 openpyxl==3.1.5
 PyYAML==6.0.2
+pyserial==3.5
