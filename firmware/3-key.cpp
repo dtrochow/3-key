@@ -3,9 +3,11 @@
 #include "buttons.hpp"
 #include "cdc.hpp"
 #include "config.hpp"
+#include "flash.hpp"
 #include "hid.hpp"
 #include "leds.hpp"
 #include "tud.hpp"
+#include <pico/time.h>
 
 Leds* g_leds       = nullptr;
 Buttons* g_buttons = nullptr;
@@ -37,6 +39,8 @@ int main(void) {
     CdcDevice cdc;
 
     initialize_tud();
+
+    Storage storage(&cdc);
 
     while (1) {
         tud_task();

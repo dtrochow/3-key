@@ -31,6 +31,7 @@ target_include_directories(${project_name} PUBLIC
 add_subdirectory(buttons)
 add_subdirectory(leds)
 add_subdirectory(usb)
+add_subdirectory(flash)
 
 target_link_libraries(${project_name} 
     pico_stdlib 
@@ -38,6 +39,7 @@ target_link_libraries(${project_name}
     buttons
     leds
     usb
+    flash
 )
 
 pico_add_extra_outputs(${project_name})
