@@ -131,7 +131,10 @@ python3 ./build.py --clean --load
 
 - Wiring
 
- All wiring is presented on _Figure 37_ (page 62) in [Getting started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf)
+    All wiring is described in [Getting started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf)
+
+    ![wiring_swd](assets/images/wiring_swd.png)
+    Source: [Getting started with Raspberry Pi Pico](https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf)
 
 - Prepare PicoProbe
    - Clone picoprobe repository
