@@ -12,4 +12,5 @@ target_link_libraries(${modulename}
     tinyusb_device 
     tinyusb_board
     buttons
+    terminal
 )

@@ -11,6 +11,18 @@ All previous versions require [the manual firmware update process](https://3-key
 
 ![3-key hardware](docs/assets/gifs/3-key.gif)
 
+## Serial Terminal
+
+To connect to the Serial Terminal the `connect_serial.py` script can be used.
+
+``` terminal
+python3 connect_serial.py
+```
+
+It finds the RPi Pico serial device name and connects to it using `picocom` tool.
+
+All requirements are listed in `requirements.txt` file.
+
 ## Documentation
 
 The detailed documentation is available here: [3-key Project Documentation](https://3-key.dtrochow.ovh/)

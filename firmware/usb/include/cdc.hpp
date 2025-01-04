@@ -1,33 +1,20 @@
-#include <map>
-#include <string>
-#include <vector>
+#pragma once
 
 #include "class/cdc/cdc_device.h"
 #include "pico/stdlib.h"
+
+#include "terminal.hpp"
 
 void cdc_task();
 
 class CdcDevice {
   public:
-    CdcDevice(size_t input_buffer_size = 128);
+    explicit CdcDevice(Terminal& t) : t(t) {};
     ~CdcDevice() = default;
 
-    void task();
-    void log(const char* message);
+    void task() const;
+    void log(const char* message) const;
 
   private:
-    std::vector<char> input_buffer;
-    uint32_t buffer_index;
-    size_t input_buffer_size;
-    void reset_to_bootloader();
-    void terminal();
-    bool handle_command();
-
-    enum class Command { RESET, UNKNOWN };
-
-    std::map<std::string, Command> command_map = {
-        { "reset", Command::RESET },
-    };
-
-    bool dispatch_command(Command command);
+    Terminal& t;
 };
