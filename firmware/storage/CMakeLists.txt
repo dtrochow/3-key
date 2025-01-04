@@ -1,10 +1,10 @@
-set(modulename "terminal")
+set(modulename "storage")
 set(SOURCES 
-        terminal.cpp
+        storage.cpp
 )
 add_library(${modulename} ${SOURCES})
 target_include_directories(${modulename} PUBLIC include)
 target_link_libraries(${modulename}
-        pico_stdlib
-        storage
+    pico_stdlib
+    hardware_flash
 )

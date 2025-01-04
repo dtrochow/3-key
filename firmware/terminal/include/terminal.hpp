@@ -4,6 +4,7 @@
 #include <string>
 
 #include "pico/stdlib.h"
+#include "storage.hpp"
 
 enum class Command {
     RESET,
@@ -19,9 +20,10 @@ class Terminal {
     static constexpr size_t max_chars         = 128;
     std::string buffer;
     size_t buff_size_bytes;
+    Storage& storage;
 
   public:
-    Terminal();
+    Terminal(Storage& storage);
     ~Terminal() = default;
     uint8_t* terminal(char new_char);
     size_t get_buff_size() const;

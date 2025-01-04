@@ -5,6 +5,7 @@
 #include "config.hpp"
 #include "hid.hpp"
 #include "leds.hpp"
+#include "storage.hpp"
 #include "terminal.hpp"
 #include "tud.hpp"
 
@@ -25,6 +26,29 @@ int main(void) {
         { 2, BUTTON_LEFT_GPIO, Modifier::LEFT_CMD, Color::Blue },
     };
 
+    Storage storage;
+
+    /*
+    This is only example usage of Storage module.
+    The statuses have been discarded here on purpose.
+    */
+    constexpr uint config_slot = 31;
+
+    config_t config;
+    storage.get_config(config_slot, config);
+
+    if (config.magic != CONFIG_MAGIC) {
+        config.magic         = CONFIG_MAGIC;
+        config.config_value1 = 42;
+        config.config_value2 = 1337;
+        storage.save_config(config_slot, config);
+    }
+
+    config.config_value1 += 1;
+    config.config_value2 -= 1;
+    storage.save_config(config_slot, config);
+    /* End of example */
+
     Leds leds(key_configs.size());
     leds.init();
 
@@ -35,7 +59,7 @@ int main(void) {
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
-    Terminal t;
+    Terminal t(storage);
     CdcDevice cdc(t);
 
     initialize_tud();
