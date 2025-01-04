@@ -31,6 +31,7 @@ target_include_directories(${project_name} PUBLIC
 add_subdirectory(buttons)
 add_subdirectory(leds)
 add_subdirectory(usb)
+add_subdirectory(storage)
 add_subdirectory(terminal)
 
 target_link_libraries(${project_name} 
@@ -39,6 +40,7 @@ target_link_libraries(${project_name}
     buttons
     leds
     usb
+    storage 
     terminal
 )
 

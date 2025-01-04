@@ -1,10 +1,9 @@
 #include "terminal.hpp"
 #include "pico/bootrom.h"
-#include <cstddef>
 
 #define PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK 0u
 
-Terminal::Terminal() {
+Terminal::Terminal(Storage& storage) : storage(storage) {
     buffer += start_string;
     buff_size_bytes = start_string.length();
 }
@@ -74,7 +73,7 @@ bool Terminal::dispatch_command(Command command) const {
             return true;
         }
         case Command::ERASE: {
-            /* @TODO */
+            storage.erase();
             return true;
         }
         default: return false;
