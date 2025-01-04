@@ -30,7 +30,7 @@ RUN rm -rf /opt/picotool \
     && cd build \
     && cmake .. -DPICOTOOL_FORCE_FETCH_FROM_GIT=ON \
     && make \
-    && cp picotool /usr/local/bin/
+    && make install
 
 ENV PICO_SDK_PATH=/opt/pico-sdk
 COPY ../ /app
