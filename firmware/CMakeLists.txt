@@ -11,7 +11,7 @@ project(${project_name} C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -31,6 +31,7 @@ target_include_directories(${project_name} PUBLIC
 add_subdirectory(buttons)
 add_subdirectory(leds)
 add_subdirectory(usb)
+add_subdirectory(terminal)
 
 target_link_libraries(${project_name} 
     pico_stdlib 
@@ -38,6 +39,7 @@ target_link_libraries(${project_name}
     buttons
     leds
     usb
+    terminal
 )
 
 pico_add_extra_outputs(${project_name})

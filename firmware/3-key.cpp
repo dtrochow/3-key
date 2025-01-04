@@ -5,6 +5,7 @@
 #include "config.hpp"
 #include "hid.hpp"
 #include "leds.hpp"
+#include "terminal.hpp"
 #include "tud.hpp"
 
 Leds* g_leds       = nullptr;
@@ -34,7 +35,8 @@ int main(void) {
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
-    CdcDevice cdc;
+    Terminal t;
+    CdcDevice cdc(t);
 
     initialize_tud();
 

@@ -7,3 +7,15 @@ It introduces the base firmware written in C++ using the Pico-SDK.
 Version [v0.0.2](https://github.com/dtrochow/3-key/releases/tag/v0.0.2) of the firmware adds CTRL+C/CTRL+V capabilities and simple RGB color support (each button has its own color).
 
 ![3-key hardware](assets/gifs/3-key.gif)
+
+## Serial Terminal
+
+To connect to the Serial Terminal the `connect_serial.py` script can be used.
+
+``` terminal
+python3 connect_serial.py
+```
+
+It finds the RPi Pico serial device name and connects to it using `picocom` tool.
+
+All requirements are listed in `requirements.txt` file.
