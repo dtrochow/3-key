@@ -28,26 +28,7 @@ int main(void) {
 
     Storage storage;
 
-    /*
-    This is only example usage of Storage module.
-    The statuses have been discarded here on purpose.
-    */
-    constexpr uint config_slot = 31;
-
-    config_t config;
-    storage.get_config(config_slot, config);
-
-    if (config.magic != CONFIG_MAGIC) {
-        config.magic         = CONFIG_MAGIC;
-        config.config_value1 = 42;
-        config.config_value2 = 1337;
-        storage.save_config(config_slot, config);
-    }
-
-    config.config_value1 += 1;
-    config.config_value2 -= 1;
-    storage.save_config(config_slot, config);
-    /* End of example */
+    storage.init();
 
     Leds leds(key_configs.size());
     leds.init();
