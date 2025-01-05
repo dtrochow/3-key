@@ -18,7 +18,7 @@
 ```bash
 $ sudo apt update
 $ sudo apt upgrade
-$ sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential 
+$ sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
 ```
 
 - Prepare pico-sdk
@@ -38,7 +38,7 @@ $ sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essenti
     ```
 
     - Set the PICO_SKD_PATH to the pico-sdk loaction
-  
+
         - Add exporting this environment variable to .bashrc file
 
         ```bash
@@ -102,7 +102,7 @@ It will perform the following actions:
 
 - Build firmware (`--clean` parameter will cause re-building all files)
 
-- Below actions will be done only with `--load` parameter 
+- Below actions will be done only with `--load` parameter
     - Reset the RPi Pico device to bootloader
     - Load the new firmware
     - Reboot RPi Pico device
@@ -166,7 +166,7 @@ python3 ./build.py --clean --load
         echo 'SUBSYSTEMS=="usb", ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="0004", GROUP="users", MODE="0666"' | sudo tee -a /etc/udev/rules.d/98-PicoProbe.rules
         sudo udevadm control --reload
         ```
-        To find the _idVendor_ and _idProducd_ you can use `lsudb -vvv` command. 
+        To find the _idVendor_ and _idProducd_ you can use `lsudb -vvv` command.
 
         You need to find thhose fields under `Raspberry Pi Picoprobe`.
 
@@ -198,7 +198,7 @@ python3 ./build.py --clean --load
         ```
 
 - Prepare VSCode debug configuration
-    
+
     - Install `Cortex-Debug` extension in VSCode
     - Install `C/C++` and `C/C++ Extension Pack` extensions in VSCode
     - Create following configuration files under `.vscode` directory
@@ -262,3 +262,50 @@ python3 ./build.py --clean --load
             "cortex-debug.openocdPath": "<path_to_openocd_repo>/openocd/src/openocd"
         }
         ```
+
+## Windows
+
+### **How to attach Picoprobe to the Docker container**
+
+To enable debugging with the Picoprobe on Windows using Docker, follow these steps:
+
+1. **Enable Docker Integration with Additional Distros**:
+   - Open Docker Desktop.
+   - Go to the **Settings** menu.
+   - Under the **Resources** tab, enable the option: **Enable integration with additional distros**.
+
+2. **Share the USB Device with WSL**:
+   You will need to bind the USB device to WSL to make it available to the Docker container. Follow the steps below:
+
+   - Open PowerShell as an administrator.
+   - List all connected USB devices by running:
+     ```powershell
+     usbipd list
+     ```
+
+   - Find your **Picoprobe device** in the list (e.g., it might show something like `2e8a:0004  Urządzenie szeregowe USB (COM13), Picoprobe`).
+
+   - Bind the Picoprobe device to WSL:
+     ```powershell
+     usbipd bind --busid <BUSID>
+     ```
+
+     Replace `<BUSID>` with the appropriate `BUSID` of your Picoprobe device.
+
+   - Attach the device to WSL:
+     ```powershell
+     usbipd attach --wsl --busid <BUSID>
+     ```
+
+3. **Run Docker with USB Device and verify device is present**:
+    After binding and attaching the device, you can run the Docker container with access to the Picoprobe device and :
+
+    ```powershell
+    docker run -it --rm --privileged --device /dev/ttyUSB0 3key:latest bash
+    ```
+    Then verify the device is present using:
+
+    ```powershell
+    ls /dev/tty*
+    ```
+    You should see your device listed (e.g., /dev/ttyACM0 or similar).
