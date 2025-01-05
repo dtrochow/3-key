@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     gcc-arm-none-eabi \
     libnewlib-arm-none-eabi \
     git \
+    vim \
     libusb-1.0-0-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -40,7 +41,7 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PATH="/opt/venv/bin:/usr/local/bin:$PATH"
 
-COPY requirements.txt app/requirements
+COPY ../requirements.txt app/requirements
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "build.py", "--clean", "--load"]
+CMD ["python", "build.py", "--clean"]
