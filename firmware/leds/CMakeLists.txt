@@ -13,4 +13,5 @@ pico_generate_pio_header(${project_name} ${CMAKE_CURRENT_LIST_DIR}/include/ws281
 target_link_libraries(${modulename}
     hardware_pio 
     buttons
+    keyscfg
 )
