@@ -41,7 +41,7 @@ int main(void) {
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
-    Terminal t(storage);
+    Terminal t(storage, keys);
     CdcDevice cdc(t);
 
     initialize_tud();

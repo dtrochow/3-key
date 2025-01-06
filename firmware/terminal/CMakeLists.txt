@@ -7,4 +7,5 @@ target_include_directories(${modulename} PUBLIC include)
 target_link_libraries(${modulename}
         pico_stdlib
         storage
+        keyscfg
 )
