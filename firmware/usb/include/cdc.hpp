@@ -30,7 +30,7 @@ void cdc_task();
 
 class CdcDevice {
   public:
-    explicit CdcDevice(Terminal& t) : t(t){};
+    explicit CdcDevice(Terminal& t) : t(t) {};
     ~CdcDevice() = default;
 
     void task() const;

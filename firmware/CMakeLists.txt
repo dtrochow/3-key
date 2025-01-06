@@ -5,6 +5,8 @@ set(project_name "3-key")
 set(cmake_files ${CMAKE_CURRENT_LIST_DIR}/cmake)
 set(src_dir ${CMAKE_CURRENT_LIST_DIR}/src)
 
+set(PICO_BOARD waveshare_rp2040_plus_16mb)
+
 include(${cmake_files}/pico_sdk_import.cmake)
 
 project(${project_name} C CXX ASM)
