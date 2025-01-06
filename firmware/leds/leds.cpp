@@ -1,11 +1,13 @@
 #include <ranges>
 
 #include "leds.hpp"
+#include "leds_config.hpp"
 #include "pico/stdlib.h"
 #include "ws2812.pio.h"
 
-Leds::Leds(uint leds_count, PIO pio, uint pin, float freq)
-: leds_count(leds_count), leds(leds_count, Led(0, 0, 0)), pio(pio), w_pin(pin), w_freq(freq), sm(0) {}
+Leds::Leds(uint leds_count, KeysConfig& keys, PIO pio, uint pin, float freq)
+: leds_count(leds_count), keys(keys), leds(leds_count, Led(0, 0, 0)), pio(pio), w_pin(pin),
+  w_freq(freq), sm(0) {}
 
 void Leds::init() {
     offset = pio_add_program(pio, &ws2812_program);
@@ -14,11 +16,11 @@ void Leds::init() {
     sleep_ms(10);
 }
 
-void Leds::set_led_color(uint led_id, Color color, bool r) {
+void Leds::enable(uint led_id, bool r) {
     if (led_id >= leds.size()) {
         return;
     }
-    switch (color) {
+    switch (keys.get_key_color(led_id)) {
         case Red: leds[led_id] = Led(255, 0, 0); break;
         case Green: leds[led_id] = Led(0, 255, 0); break;
         case Blue: leds[led_id] = Led(0, 0, 255); break;
@@ -28,9 +30,19 @@ void Leds::set_led_color(uint led_id, Color color, bool r) {
         refresh();
 }
 
-void Leds::set_all_color(Color color, bool r) {
+void Leds::disable(uint led_id, bool r) {
+    if (led_id >= leds.size()) {
+        return;
+    }
+
+    leds[led_id] = Led(0, 0, 0);
+    if (r)
+        refresh();
+}
+
+void Leds::enable_all(bool r) {
     for (int id = 0; id < leds.size(); id++) {
-        set_led_color(id, color);
+        enable(id);
     }
     if (r)
         refresh();
@@ -38,41 +50,41 @@ void Leds::set_all_color(Color color, bool r) {
 
 void Leds::disable_all(bool r) {
     for (int id = 0; id < leds.size(); id++) {
-        set_led_color(id, Color::None);
+        disable(id);
     }
     if (r)
         refresh();
 }
 
-void Leds::push_led(const Led& led) {
-    uint32_t color = (static_cast<uint32_t>(led.red) << 16) |
+void Leds::push_led(const Led& led) const {
+    const uint32_t color = (static_cast<uint32_t>(led.red) << 16) |
         (static_cast<uint32_t>(led.green) << 8) | (static_cast<uint32_t>(led.blue));
 
     pio_sm_put_blocking(pio, sm, color << 8u);
 }
 
-void Leds::refresh() {
+void Leds::refresh() const {
     for (const auto led : std::ranges::reverse_view(leds)) {
         push_led(led);
     }
 }
 
-void Leds::blink(Color color, uint count, float freq) {
-    uint32_t delay = static_cast<uint32_t>(((1 / freq) / 2) * 1000);
+void Leds::blink(uint count, float freq) {
+    const uint32_t delay = static_cast<uint32_t>(((1 / freq) / 2) * 1000);
     for (int i = 0; i < count; i++) {
-        set_all_color(color, true);
+        enable_all(true);
         sleep_ms(delay);
-        set_all_color(Color::None, true);
+        disable_all(true);
         sleep_ms(delay);
     }
 }
 
-void Leds::blink(uint led_id, Color color, uint count, float freq) {
-    uint32_t delay = static_cast<uint32_t>(((1 / freq) / 2) * 1000);
+void Leds::blink(uint led_id, uint count, float freq) {
+    const uint32_t delay = static_cast<uint32_t>(((1 / freq) / 2) * 1000);
     for (int i = 0; i < count; i++) {
-        set_led_color(led_id, color, true);
+        enable(led_id, true);
         sleep_ms(delay);
-        set_led_color(led_id, Color::None, true);
+        disable(led_id, true);
         sleep_ms(delay);
     }
 }
@@ -80,12 +92,11 @@ void Leds::blink(uint led_id, Color color, uint count, float freq) {
 void leds_task(Leds& leds, const Buttons& buttons) {
     const std::vector<Button> btns = buttons.get_btns();
     for (const auto& btn : btns) {
-        const uint btn_id     = buttons.get_btn_id(btn);
-        const Color btn_color = buttons.get_btn_color(btn);
+        const uint btn_id = buttons.get_btn_id(btn);
         if (buttons.is_btn_pressed(btn)) {
-            leds.set_led_color(btn_id, btn_color);
+            leds.enable(btn_id);
         } else {
-            leds.set_led_color(btn_id, Color::None);
+            leds.disable(btn_id);
         }
     }
     leds.refresh();

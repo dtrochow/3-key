@@ -10,4 +10,5 @@ target_link_libraries(${modulename}
     tinyusb_device
     usb
     leds
+    keyscfg
 )
