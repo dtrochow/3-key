@@ -4,6 +4,7 @@
 #include "cdc.hpp"
 #include "config.hpp"
 #include "hid.hpp"
+#include "keys_config.hpp"
 #include "leds.hpp"
 #include "storage.hpp"
 #include "terminal.hpp"
@@ -15,7 +16,7 @@ Buttons* g_buttons = nullptr;
 void leds_task_on_core1() {
     while (1) {
         leds_task(*g_leds, *g_buttons);
-        sleep_ms(50);
+        sleep_ms(100);
     }
 }
 
@@ -27,20 +28,20 @@ int main(void) {
     };
 
     Storage storage;
-
     storage.init();
 
-    Leds leds(key_configs.size());
+    KeysConfig keys(key_configs);
+    Leds leds(3, keys);
     leds.init();
 
-    Buttons buttons(key_configs);
+    Buttons buttons(keys);
     buttons.init();
 
     g_buttons = &buttons;
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
-    Terminal t(storage);
+    Terminal t(storage, keys);
     CdcDevice cdc(t);
 
     initialize_tud();

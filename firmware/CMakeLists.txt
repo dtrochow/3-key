@@ -11,10 +11,10 @@ project(${project_name} C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_FLAGS_RELEASE "-O1")
+set(CMAKE_CXX_FLAGS_RELEASE "-O1")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -33,6 +33,8 @@ add_subdirectory(leds)
 add_subdirectory(usb)
 add_subdirectory(storage)
 add_subdirectory(terminal)
+add_subdirectory(keyscfg)
+add_subdirectory(time-tracker)
 
 target_link_libraries(${project_name} 
     pico_stdlib 
@@ -42,6 +44,8 @@ target_link_libraries(${project_name}
     usb
     storage 
     terminal
+    keyscfg
+    time-tracker
 )
 
 pico_add_extra_outputs(${project_name})

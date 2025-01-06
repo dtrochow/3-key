@@ -4,14 +4,15 @@
 #include <vector>
 
 #include "buttons_config.hpp"
+#include "keys_config.hpp"
 
 class Buttons {
   public:
-    explicit Buttons(const std::vector<ButtonConfig>& key_configs);
+    explicit Buttons(KeysConfig& keys);
     ~Buttons() = default;
 
   private:
-    std::map<Button, ButtonConfig> buttons;
+    KeysConfig& keys;
 
   public:
     void init();
@@ -20,5 +21,4 @@ class Buttons {
     uint8_t get_modifier_flags() const;
     uint get_btn_id(const Button& btn) const;
     std::vector<Button> get_btns() const;
-    Color get_btn_color(const Button& btn) const;
 };
