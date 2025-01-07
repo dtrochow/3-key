@@ -54,6 +54,8 @@ plugins:
 nav:
   - Home: index.md
   - Hardware: hardware.md
-  - Development: development.md
+  - Development:
+      - Environment & Tools: development.md
+      - Features: features.md
   - Blog: blog/index.md
 exclude_docs: README.md
