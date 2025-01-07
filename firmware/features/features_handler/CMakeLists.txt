@@ -1,12 +1,11 @@
-set(modulename "terminal")
+set(modulename "features_handler")
 set(SOURCES 
-        terminal.cpp
+        features_handler.cpp
 )
 add_library(${modulename} ${SOURCES})
 target_include_directories(${modulename} PUBLIC include)
 target_link_libraries(${modulename}
-        pico_stdlib
-        storage
-        keyscfg
-        features_handler
+    pico_stdlib 
+    buttons
+    ctrl_c_v
 )

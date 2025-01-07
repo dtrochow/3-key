@@ -36,6 +36,7 @@ add_subdirectory(usb)
 add_subdirectory(storage)
 add_subdirectory(terminal)
 add_subdirectory(keyscfg)
+add_subdirectory(features)
 
 target_link_libraries(${project_name} 
     pico_stdlib 
@@ -46,6 +47,7 @@ target_link_libraries(${project_name}
     storage 
     terminal
     keyscfg
+    features_handler
 )
 
 pico_add_extra_outputs(${project_name})

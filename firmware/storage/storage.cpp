@@ -21,11 +21,12 @@
 
 #include <cstring>
 #include <limits>
+#include <pico/mutex.h>
 
 #include "storage.hpp"
 #include "storage_config.hpp"
 
-Storage::Storage() {
+Storage::Storage(mutex_t& mutex) : mutex(mutex) {
     sector.resize(blobs_per_sector);
     max_blob_id        = (STORAGE_SIZE / BLOB_SLOT_SIZE_BYTES) - 1;
     storage_start_addr = (const uint8_t*)(XIP_BASE + STORAGE_FLASH_OFFSET);
@@ -33,6 +34,7 @@ Storage::Storage() {
 
 StorageStatus Storage::init() {
     StorageStatus status = StorageStatus::ERROR;
+    (void)get_blob(BlobType::STORAGE_CONFIG, s_config);
 
     if (is_factory_required()) {
         status = factory_init();
@@ -56,21 +58,24 @@ uint32_t Storage::get_init_count() const {
 }
 
 bool Storage::is_factory_required() {
-    get_blob(BlobType::STORAGE_CONFIG, s_config);
     return (s_config.magic != BLOB_MAGIC);
 }
 
 void Storage::erase() const {
+    mutex_enter_blocking(&mutex);
     const uint32_t interrupts = save_and_disable_interrupts();
     flash_range_erase(STORAGE_FLASH_OFFSET & ~(FLASH_SECTOR_SIZE - 1), STORAGE_SIZE);
     restore_interrupts(interrupts);
+    mutex_exit(&mutex);
 }
 
 void Storage::erase(uint sector_id) const {
+    mutex_enter_blocking(&mutex);
     const uint32_t interrupts   = save_and_disable_interrupts();
     const uintptr_t sector_addr = STORAGE_FLASH_OFFSET + (sector_id * FLASH_SECTOR_SIZE);
     flash_range_erase(sector_addr & ~(FLASH_SECTOR_SIZE - 1), FLASH_SECTOR_SIZE);
     restore_interrupts(interrupts);
+    mutex_exit(&mutex);
 }
 
 const uint8_t* Storage::get_blob_address(uint blob_id) const {
@@ -156,9 +161,11 @@ void Storage::save_sector(uint sector_id) const {
     }
     const uintptr_t sector_addr = STORAGE_FLASH_OFFSET + (sector_id * FLASH_SECTOR_SIZE);
 
+    mutex_enter_blocking(&mutex);
     const uint32_t interrupts = save_and_disable_interrupts();
     flash_range_program(sector_addr, reinterpret_cast<const uint8_t*>(sector.data()), FLASH_SECTOR_SIZE);
     restore_interrupts(interrupts);
+    mutex_exit(&mutex);
 }
 
 StorageStatus Storage::_save_blob(BlobType blob_type, std::span<uint8_t> blob) {

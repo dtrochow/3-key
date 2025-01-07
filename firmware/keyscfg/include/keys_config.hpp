@@ -25,11 +25,19 @@
 
 #include "buttons_config.hpp"
 #include "leds_config.hpp"
+#include "pico/mutex.h"
 #include "pico/stdlib.h"
+
+typedef struct {
+    uint id;
+    Button key;
+    Color color;
+} KeyConfigTableEntry_t;
 
 class KeysConfig {
   public:
-    KeysConfig(std::vector<ButtonConfig> keys_default) : keys(keys_default) {
+    KeysConfig(std::vector<ButtonConfig> keys_default, mutex_t& mutex)
+    : keys(keys_default), mutex(mutex) {
         keys_cnt = keys_default.size();
     };
     ~KeysConfig() = default;
@@ -37,6 +45,7 @@ class KeysConfig {
   private:
     std::vector<ButtonConfig> keys;
     uint keys_cnt;
+    mutex_t& mutex;
 
   public:
     const std::vector<ButtonConfig>& get_key_cfgs() const { return keys; }
@@ -47,14 +56,18 @@ class KeysConfig {
         if (key_id >= keys_cnt) {
             return;
         }
+        mutex_enter_blocking(&mutex);
         keys[key_id].color = color;
+        mutex_exit(&mutex);
     }
 
     void set_key_value(uint key_id, Button btn) {
         if (key_id >= keys_cnt) {
             return;
         }
+        mutex_enter_blocking(&mutex);
         keys[key_id].value = btn;
+        mutex_exit(&mutex);
     }
 
     Color get_key_color(uint key_id) const {

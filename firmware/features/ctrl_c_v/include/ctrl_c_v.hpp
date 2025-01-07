@@ -21,24 +21,18 @@
 
 #pragma once
 
-#include "hardware/flash.h"
+#include "buttons.hpp"
+#include "features_handler.hpp"
 
-#define BLOB_SLOTS_COUNT 16
-#define BLOB_SLOT_SIZE_BYTES 2048
-#define BLOB_MAGIC 0xDEADBEEF
+class CtrlCVFeature : public Feature {
+  public:
+    explicit CtrlCVFeature(KeysConfig& keys_config)
+    : Feature(keys_config), has_keyboard_key(false) {}
+    void handle(const Buttons& buttons);
 
-#define STORAGE_SIZE (BLOB_SLOTS_COUNT * BLOB_SLOT_SIZE_BYTES)
-static_assert((STORAGE_SIZE % FLASH_SECTOR_SIZE) == 0, "The size of the storage must be multiple of sector size.");
+  private:
+    bool has_keyboard_key;
 
-#define STORAGE_FLASH_OFFSET (PICO_FLASH_SIZE_BYTES - STORAGE_SIZE)
-
-typedef struct {
-    uint32_t magic;
-    uint32_t init_count;
-} StorageConfig_t;
-
-enum class BlobType : uint {
-    STORAGE_CONFIG,
-    FEATURES_HANDLER_CONFIG,
-    BLOBS_COUNT,
+    void send_keys(const uint8_t key, const Buttons& buttons);
+    void init();
 };

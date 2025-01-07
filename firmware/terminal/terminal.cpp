@@ -25,13 +25,15 @@
 #include <sstream>
 #include <vector>
 
+#include "features_handler.hpp"
 #include "keys_config.hpp"
 #include "pico/bootrom.h"
 #include "terminal.hpp"
 
 #define PICO_STDIO_USB_RESET_BOOTSEL_INTERFACE_DISABLE_MASK 0u
 
-Terminal::Terminal(Storage& storage, KeysConfig& keys) : storage(storage), keys(keys) {
+Terminal::Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler)
+: storage(storage), keys(keys), f_handler(f_handler) {
     buffer += start_string;
 }
 
@@ -102,6 +104,9 @@ bool Terminal::dispatch_command(Command command, const std::vector<std::string>&
         case Command::CHANGE_COLOR: {
             return handle_change_color_command(params);
         }
+        case Command::FEATURE: {
+            return handle_feature_command(params);
+        }
         default: return false;
     }
 }
@@ -138,6 +143,31 @@ bool Terminal::handle_change_color_command(const std::vector<std::string>& param
 
     keys.set_key_color(button_id, color);
     add_log("Changing button " + std::to_string(button_id) + " color to " + color_name);
+
+    return true;
+}
+
+bool Terminal::handle_feature_command(const std::vector<std::string>& params) {
+    if (params.size() != 1) {
+        add_log("Error: feature requires exactly 1 parameter");
+        return false;
+    }
+
+    const std::string& feature_name = params[0];
+    FeatureType feature;
+
+    if (feature_name == "none") {
+        feature = FeatureType::NONE;
+    } else if (feature_name == "ctrl_c_v") {
+        feature = FeatureType::CTRL_C_V;
+    } else {
+        add_log("Error: Unknown feature");
+        return false;
+    }
+
+    f_handler.switch_to_feature(feature);
+
+    add_log("Feature enabled: " + feature_name);
 
     return true;
 }
