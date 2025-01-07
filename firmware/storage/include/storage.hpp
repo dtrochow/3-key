@@ -27,6 +27,7 @@
 
 #include "hardware/flash.h"
 #include "hardware/sync.h"
+#include "pico/mutex.h"
 
 #include "storage_config.hpp"
 
@@ -41,7 +42,7 @@ using BlobBuff_t = std::array<uint8_t, BLOB_SLOT_SIZE_BYTES>;
 
 class Storage {
   public:
-    Storage();
+    Storage(mutex_t& mutex);
     ~Storage() = default;
     StorageStatus init();
     StorageStatus factory_init();
@@ -52,6 +53,7 @@ class Storage {
     std::vector<BlobBuff_t> sector;
     uint32_t max_blob_id;
     const uint8_t* storage_start_addr;
+    mutex_t& mutex;
 
     const uint8_t* get_blob_address(uint blob_id) const;
     uint get_sector_id(BlobType blob_type) const;

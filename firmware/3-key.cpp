@@ -20,10 +20,12 @@
  */
 
 #include "pico/multicore.h"
+#include "pico/mutex.h"
 
 #include "buttons.hpp"
 #include "cdc.hpp"
 #include "config.hpp"
+#include "features_handler.hpp"
 #include "hid.hpp"
 #include "keys_config.hpp"
 #include "leds.hpp"
@@ -34,10 +36,14 @@
 Leds* g_leds       = nullptr;
 Buttons* g_buttons = nullptr;
 
+mutex_t g_mutex;
+
 void leds_task_on_core1() {
     while (1) {
+        mutex_enter_blocking(&g_mutex);
         leds_task(*g_leds, *g_buttons);
-        sleep_ms(50);
+        mutex_exit(&g_mutex);
+        sleep_ms(80);
     }
 }
 
@@ -48,10 +54,12 @@ int main(void) {
         { 2, BUTTON_LEFT_GPIO, Modifier::LEFT_CMD, Color::Blue },
     };
 
-    Storage storage;
+    mutex_init(&g_mutex);
+
+    Storage storage(g_mutex);
     storage.init();
 
-    KeysConfig keys(key_configs);
+    KeysConfig keys(key_configs, g_mutex);
     Leds leds(3, keys);
     leds.init();
 
@@ -62,14 +70,17 @@ int main(void) {
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
-    Terminal t(storage, keys);
+    FeaturesHandler f_handler(storage, keys);
+    f_handler.init();
+
+    Terminal t(storage, keys, f_handler);
     CdcDevice cdc(t);
 
     initialize_tud();
 
     while (1) {
         tud_task();
-        hid_task(buttons);
+        hid_task(buttons, f_handler);
         cdc.task();
     }
 }

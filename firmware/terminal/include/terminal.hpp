@@ -23,7 +23,9 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
+#include "features_handler.hpp"
 #include "keys_config.hpp"
 #include "pico/stdlib.h"
 #include "storage.hpp"
@@ -32,6 +34,7 @@ enum class Command {
     RESET,
     ERASE,
     CHANGE_COLOR,
+    FEATURE,
     UNKNOWN,
 };
 
@@ -43,18 +46,20 @@ class Terminal {
     Storage& storage;
 
   public:
-    Terminal(Storage& storage, KeysConfig& keys);
+    Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler);
     ~Terminal() = default;
     std::span<uint8_t> terminal(char new_char);
 
   private:
     KeysConfig& keys;
+    FeaturesHandler& f_handler;
 
     /* Command strings mapping */
     std::map<std::string, Command> command_map = {
         { "reset", Command::RESET },
         { "erase", Command::ERASE },
         { "color", Command::CHANGE_COLOR },
+        { "feature", Command::FEATURE },
     };
 
     bool dispatch_command(Command command, const std::vector<std::string>& params);
@@ -68,4 +73,5 @@ class Terminal {
 
     void reset_to_bootloader() const;
     bool handle_change_color_command(const std::vector<std::string>& params);
+    bool handle_feature_command(const std::vector<std::string>& params);
 };

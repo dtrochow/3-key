@@ -22,5 +22,6 @@
 #pragma once
 
 #include "buttons.hpp"
+#include "features_handler.hpp"
 
-void hid_task(const Buttons& buttons);
+void hid_task(const Buttons& buttons, FeaturesHandler& features_handler);
