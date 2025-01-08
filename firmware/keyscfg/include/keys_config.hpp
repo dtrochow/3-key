@@ -21,12 +21,13 @@
 
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 #include "buttons_config.hpp"
 #include "leds_config.hpp"
-#include "pico/mutex.h"
 #include "pico/stdlib.h"
+#include "storage.hpp"
 
 typedef struct {
     uint id;
@@ -34,53 +35,80 @@ typedef struct {
     Color color;
 } KeyConfigTableEntry_t;
 
+#define MAX_KEYS_COUNT 10
+
+typedef struct {
+    uint32_t magic;
+    ButtonConfig keys[MAX_KEYS_COUNT];
+    uint32_t keys_count;
+} KeysConfig_t;
+
 class KeysConfig {
   public:
-    KeysConfig(std::vector<ButtonConfig> keys_default, mutex_t& mutex)
-    : keys(keys_default), mutex(mutex) {
-        keys_cnt = keys_default.size();
-    };
+    KeysConfig(std::vector<ButtonConfig> keys_default, Storage& storage) : storage(storage) {
+        init(keys_default);
+    }
     ~KeysConfig() = default;
 
+    void init(const std::vector<ButtonConfig>& keys_default) {
+        storage.get_blob(BlobType::KEYS_CONFIG, config);
+
+        if (is_factory_required()) {
+            factory_init(keys_default);
+        }
+    }
+
+    void factory_init(const std::vector<ButtonConfig>& keys_default) {
+        config.magic      = BLOB_MAGIC;
+        config.keys_count = std::min(static_cast<int>(keys_default.size()), MAX_KEYS_COUNT);
+
+        for (uint32_t i = 0; i < config.keys_count; ++i) {
+            config.keys[i] = keys_default[i];
+        }
+
+        storage.save_blob(BlobType::KEYS_CONFIG, config);
+    }
+
   private:
-    std::vector<ButtonConfig> keys;
-    uint keys_cnt;
-    mutex_t& mutex;
+    KeysConfig_t config;
+    Storage& storage;
+
+    bool is_factory_required() { return (config.magic != BLOB_MAGIC); }
 
   public:
-    const std::vector<ButtonConfig>& get_key_cfgs() const { return keys; }
+    std::vector<ButtonConfig> get_key_cfgs() const {
+        return std::vector<ButtonConfig>(config.keys, config.keys + config.keys_count);
+    }
 
-    uint get_keys_count() const { return keys_cnt; }
+    uint get_keys_count() const { return config.keys_count; }
 
     void set_key_color(uint key_id, Color color) {
-        if (key_id >= keys_cnt) {
+        if (key_id >= config.keys_count) {
             return;
         }
-        mutex_enter_blocking(&mutex);
-        keys[key_id].color = color;
-        mutex_exit(&mutex);
+        config.keys[key_id].color = color;
+        storage.save_blob(BlobType::KEYS_CONFIG, config);
     }
 
     void set_key_value(uint key_id, Button btn) {
-        if (key_id >= keys_cnt) {
+        if (key_id >= config.keys_count) {
             return;
         }
-        mutex_enter_blocking(&mutex);
-        keys[key_id].value = btn;
-        mutex_exit(&mutex);
+        config.keys[key_id].value = btn;
+        storage.save_blob(BlobType::KEYS_CONFIG, config);
     }
 
     Color get_key_color(uint key_id) const {
-        if (key_id >= keys_cnt) {
+        if (key_id >= config.keys_count) {
             return Color::None;
         }
-        return keys[key_id].color;
+        return config.keys[key_id].color;
     }
 
     Button get_key_value(uint key_id) const {
-        if (key_id >= keys_cnt) {
+        if (key_id >= config.keys_count) {
             return Key::NONE;
         }
-        return keys[key_id].value;
+        return config.keys[key_id].value;
     }
 };

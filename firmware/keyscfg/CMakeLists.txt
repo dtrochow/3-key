@@ -5,4 +5,5 @@ target_link_libraries(${modulename}
     pico_stdlib 
     leds
     buttons
+    storage
 )

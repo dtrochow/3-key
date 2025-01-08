@@ -59,7 +59,7 @@ int main(void) {
     Storage storage(g_mutex);
     storage.init();
 
-    KeysConfig keys(key_configs, g_mutex);
+    KeysConfig keys(key_configs, storage);
     Leds leds(3, keys);
     leds.init();
 
