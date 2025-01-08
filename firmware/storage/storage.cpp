@@ -70,12 +70,10 @@ void Storage::erase() const {
 }
 
 void Storage::erase(uint sector_id) const {
-    mutex_enter_blocking(&mutex);
     const uint32_t interrupts   = save_and_disable_interrupts();
     const uintptr_t sector_addr = STORAGE_FLASH_OFFSET + (sector_id * FLASH_SECTOR_SIZE);
     flash_range_erase(sector_addr & ~(FLASH_SECTOR_SIZE - 1), FLASH_SECTOR_SIZE);
     restore_interrupts(interrupts);
-    mutex_exit(&mutex);
 }
 
 const uint8_t* Storage::get_blob_address(uint blob_id) const {
@@ -161,11 +159,9 @@ void Storage::save_sector(uint sector_id) const {
     }
     const uintptr_t sector_addr = STORAGE_FLASH_OFFSET + (sector_id * FLASH_SECTOR_SIZE);
 
-    mutex_enter_blocking(&mutex);
     const uint32_t interrupts = save_and_disable_interrupts();
     flash_range_program(sector_addr, reinterpret_cast<const uint8_t*>(sector.data()), FLASH_SECTOR_SIZE);
     restore_interrupts(interrupts);
-    mutex_exit(&mutex);
 }
 
 StorageStatus Storage::_save_blob(BlobType blob_type, std::span<uint8_t> blob) {
@@ -176,20 +172,26 @@ StorageStatus Storage::_save_blob(BlobType blob_type, std::span<uint8_t> blob) {
         return StorageStatus::INVALID_ID;
     }
 
+    mutex_enter_blocking(&mutex);
+
     const uint sector_id = get_sector_id(blob_type);
 
-    status = read_sector(sector_id);
-    if (StorageStatus::SUCCESS != status) {
-        return status;
-    }
+    do {
+        status = read_sector(sector_id);
+        if (StorageStatus::SUCCESS != status) {
+            break;
+        }
 
-    status = update_blob_in_sector(blob_type, blob);
-    if (StorageStatus::SUCCESS != status) {
-        return status;
-    }
+        status = update_blob_in_sector(blob_type, blob);
+        if (StorageStatus::SUCCESS != status) {
+            break;
+        }
 
-    erase(sector_id);
-    save_sector(sector_id);
+        erase(sector_id);
+        save_sector(sector_id);
+    } while (0);
 
-    return StorageStatus::SUCCESS;
+    mutex_exit(&mutex);
+
+    return status;
 }
