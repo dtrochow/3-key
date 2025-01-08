@@ -40,5 +40,6 @@ typedef struct {
 enum class BlobType : uint {
     STORAGE_CONFIG,
     FEATURES_HANDLER_CONFIG,
+    KEYS_CONFIG,
     BLOBS_COUNT,
 };
