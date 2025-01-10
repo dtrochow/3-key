@@ -301,7 +301,7 @@ To enable debugging with the Picoprobe on Windows using Docker, follow these ste
     After binding and attaching the device, you can run the Docker container with access to the Picoprobe device and :
 
     ```powershell
-    docker run -it --rm --privileged --device /dev/ttyUSB0 3key:latest bash
+    docker run -it --rm --privileged --device /dev/ttyACM0 3key:latest bash
     ```
     Then verify the device is present using:
 

@@ -39,3 +39,5 @@ build
 
 .venv
 site
+
+/build
