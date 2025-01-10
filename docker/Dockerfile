@@ -2,6 +2,7 @@ FROM ubuntu:24.10
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3 \
@@ -13,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     git \
     vim \
     libusb-1.0-0-dev \
+    openocd \
+    gdb-multiarch \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/raspberrypi/pico-sdk.git /opt/pico-sdk \
@@ -33,15 +36,16 @@ RUN rm -rf /opt/picotool \
     && make \
     && make install
 
+# Set environment variables
 ENV PICO_SDK_PATH=/opt/pico-sdk
-COPY ../ /app
 WORKDIR /app
 
+# Install dependencies
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PATH="/opt/venv/bin:/usr/local/bin:$PATH"
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-COPY ../requirements.txt app/requirements
-RUN pip install --no-cache-dir -r requirements.txt
-
+# Default command to run the build
 CMD ["python", "build.py", "--clean"]

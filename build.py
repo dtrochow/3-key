@@ -26,8 +26,11 @@ def clean_build_directory(build_dir):
 
 
 def build_firmware(clean):
-    firmware_dir = get_absolute_path("firmware")
-    build_dir = os.path.join(firmware_dir, "build")
+    # Set the build directory to be directly in the project root (using `build/`)
+    build_dir = get_absolute_path("build")
+
+    # Set the source directory (where CMakeLists.txt is)
+    source_dir = get_absolute_path("firmware")  # Assuming CMakeLists.txt is in the firmware directory
 
     if clean:
         clean_build_directory(build_dir)
@@ -36,7 +39,7 @@ def build_firmware(clean):
 
     try:
         logging.info("Running cmake ..")
-        subprocess.run(["cmake", ".."], cwd=build_dir, check=True)
+        subprocess.run(["cmake", source_dir], cwd=build_dir, check=True)  # Specify the source directory for CMake
         logging.info("Running make -j8")
         subprocess.run(["make", "-j8"], cwd=build_dir, check=True)
         logging.info("Firmware build completed successfully.")
@@ -81,8 +84,9 @@ def enter_boot_mode():
         logging.error(f"Failed to enter boot mode: {e}")
         raise
 
+
 def load_firmware():
-    firmware_path = get_absolute_path("firmware/build/3-key.uf2")
+    firmware_path = get_absolute_path("build/3-key.uf2")
 
     if not os.path.exists(firmware_path):
         raise FileNotFoundError(f"Firmware file not found at {firmware_path}")
