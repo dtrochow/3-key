@@ -107,6 +107,9 @@ bool Terminal::dispatch_command(Command command, const std::vector<std::string>&
         case Command::FEATURE: {
             return handle_feature_command(params);
         }
+        case Command::TIME: {
+            return handle_time_command(params);
+        }
         default: return false;
     }
 }
@@ -160,6 +163,8 @@ bool Terminal::handle_feature_command(const std::vector<std::string>& params) {
         feature = FeatureType::NONE;
     } else if (feature_name == "ctrl_c_v") {
         feature = FeatureType::CTRL_C_V;
+    } else if (feature_name == "time-tracker") {
+        feature = FeatureType::TIME_TRACKER;
     } else {
         add_log("Error: Unknown feature");
         return false;
@@ -169,6 +174,26 @@ bool Terminal::handle_feature_command(const std::vector<std::string>& params) {
 
     add_log("Feature enabled: " + feature_name);
 
+    return true;
+}
+
+bool Terminal::handle_time_command(const std::vector<std::string>& params) {
+    if (params.size() < 1) {
+        add_log("Error: 1 argument required");
+        return false;
+    }
+
+    const std::string& type = params[0];
+    std::string log;
+    if (type == "work") {
+        log = f_handler.get_feature_log(FeatureType::TIME_TRACKER, 0);
+    } else if (type == "meetings") {
+        log = f_handler.get_feature_log(FeatureType::TIME_TRACKER, 1);
+    } else {
+        log = "Error: Unsupported argument";
+    }
+
+    add_log(log);
     return true;
 }
 
