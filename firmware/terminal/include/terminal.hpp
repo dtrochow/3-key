@@ -35,6 +35,7 @@ enum class Command {
     ERASE,
     CHANGE_COLOR,
     FEATURE,
+    TIME,
     UNKNOWN,
 };
 
@@ -60,6 +61,7 @@ class Terminal {
         { "erase", Command::ERASE },
         { "color", Command::CHANGE_COLOR },
         { "feature", Command::FEATURE },
+        { "time", Command::TIME },
     };
 
     bool dispatch_command(Command command, const std::vector<std::string>& params);
@@ -74,4 +76,5 @@ class Terminal {
     void reset_to_bootloader() const;
     bool handle_change_color_command(const std::vector<std::string>& params);
     bool handle_feature_command(const std::vector<std::string>& params);
+    bool handle_time_command(const std::vector<std::string>& params);
 };
