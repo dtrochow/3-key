@@ -1,12 +1,11 @@
-set(modulename "features_handler")
+set(modulename "time_tracker")
 set(SOURCES 
-        features_handler.cpp
+        time_tracker.cpp
 )
 add_library(${modulename} ${SOURCES})
 target_include_directories(${modulename} PUBLIC include)
 target_link_libraries(${modulename}
     pico_stdlib 
-    buttons
-    ctrl_c_v
-    time_tracker
+    features_handler
+    usb
 )

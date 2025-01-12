@@ -35,10 +35,14 @@ void FeaturesHandler::init() {
     if (is_factory_required()) {
         factory_init();
     }
+
+    if (config.is_feature_set)
+        features[config.current_feature]->init();
 }
 
 void FeaturesHandler::initialize_features() {
-    features[FeatureType::CTRL_C_V] = std::make_unique<CtrlCVFeature>(keys_config);
+    features[FeatureType::CTRL_C_V]     = std::make_unique<CtrlCVFeature>(keys_config);
+    features[FeatureType::TIME_TRACKER] = std::make_unique<TimeTracker>(keys_config, storage);
 }
 
 void FeaturesHandler::factory_init() {

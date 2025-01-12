@@ -30,6 +30,7 @@
 
 enum class FeatureType {
     CTRL_C_V,
+    TIME_TRACKER,
     NONE,
 };
 
