@@ -35,6 +35,8 @@ void CtrlCVFeature::init() {
         keys_config.set_key_color(entry.id, entry.color);
         keys_config.set_key_value(entry.id, entry.key);
     }
+
+    keys_config.switch_leds_mode(LedsMode::WHEN_BUTTON_PRESSED);
 }
 
 void CtrlCVFeature::send_keys(const uint8_t key, const Buttons& buttons) {
@@ -55,7 +57,11 @@ void CtrlCVFeature::send_keys(const uint8_t key, const Buttons& buttons) {
     }
 }
 
-void CtrlCVFeature::handle(const Buttons& buttons) {
+void CtrlCVFeature::handle(Buttons& buttons) {
     const uint8_t key = buttons.get_pressed_key();
     send_keys(key, buttons);
+}
+
+std::string CtrlCVFeature::get_log(uint log_id) const {
+    return "";
 }

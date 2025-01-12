@@ -45,4 +45,5 @@ struct ButtonConfig {
     uint gpio;
     Button value;
     Color color;
+    bool enabled;
 };

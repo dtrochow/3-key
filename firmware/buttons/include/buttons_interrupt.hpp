@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "buttons.hpp"
-#include "features_handler.hpp"
-
-void hid_task(Buttons& buttons, FeaturesHandler& features_handler);
+void gpio_callback(uint gpio, uint32_t events);
+bool debounce_timer_callback(repeating_timer_t* timer);
+uint get_key_id(uint gpio);

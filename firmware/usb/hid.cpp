@@ -26,7 +26,7 @@
 #include "hid.hpp"
 #include "usb_descriptors.h"
 
-void hid_task(const Buttons& buttons, FeaturesHandler& features_handler) {
+void hid_task(Buttons& buttons, FeaturesHandler& features_handler) {
     constexpr uint32_t interval_ms = 10;
     static uint32_t start_ms       = 0;
 

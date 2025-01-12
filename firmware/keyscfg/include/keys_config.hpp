@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "buttons_config.hpp"
+#include "buttons_interrupt.hpp"
 #include "leds_config.hpp"
 #include "pico/stdlib.h"
 #include "storage.hpp"
@@ -37,6 +38,12 @@ typedef struct {
 
 #define MAX_KEYS_COUNT 10
 
+enum class LedsMode {
+    WHEN_BUTTON_PRESSED,
+    HANDLED_BY_FEATURE,
+    NONE,
+};
+
 typedef struct {
     uint32_t magic;
     ButtonConfig keys[MAX_KEYS_COUNT];
@@ -45,11 +52,13 @@ typedef struct {
 
 class KeysConfig {
   public:
-    KeysConfig(std::vector<ButtonConfig> keys_default, Storage& storage) : storage(storage) {
+    KeysConfig(std::vector<ButtonConfig> keys_default, Storage& storage)
+    : storage(storage), leds_mode(LedsMode::WHEN_BUTTON_PRESSED) {
         init(keys_default);
     }
     ~KeysConfig() = default;
 
+  private:
     void init(const std::vector<ButtonConfig>& keys_default) {
         storage.get_blob(BlobType::KEYS_CONFIG, config);
 
@@ -72,10 +81,43 @@ class KeysConfig {
   private:
     KeysConfig_t config;
     Storage& storage;
+    LedsMode leds_mode;
 
     bool is_factory_required() { return (config.magic != BLOB_MAGIC); }
 
   public:
+    bool is_enabled(uint key_id) const { return config.keys[key_id].enabled; }
+    void led_enable(uint key_id) { config.keys[key_id].enabled = true; }
+    void led_disable(uint key_id) { config.keys[key_id].enabled = false; }
+
+    void led_toggle(uint key_id) {
+        if (is_enabled(key_id)) {
+            led_disable(key_id);
+        } else {
+            led_enable(key_id);
+        }
+    }
+
+    LedsMode get_leds_mode() const { return leds_mode; }
+    void switch_leds_mode(LedsMode mode) {
+        leds_mode = mode;
+        switch (leds_mode) {
+            case LedsMode::WHEN_BUTTON_PRESSED: {
+                for (auto const& key : get_key_cfgs()) {
+                    gpio_set_irq_enabled_with_callback(key.gpio, GPIO_IRQ_LEVEL_LOW, false, &gpio_callback);
+                }
+                break;
+            }
+            case LedsMode::HANDLED_BY_FEATURE: {
+                for (auto const& key : get_key_cfgs()) {
+                    gpio_set_irq_enabled_with_callback(key.gpio, GPIO_IRQ_LEVEL_LOW, true, &gpio_callback);
+                }
+                break;
+            }
+            default: break;
+        }
+    }
+
     std::vector<ButtonConfig> get_key_cfgs() const {
         return std::vector<ButtonConfig>(config.keys, config.keys + config.keys_count);
     }
