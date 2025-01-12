@@ -41,5 +41,6 @@ enum class BlobType : uint {
     STORAGE_CONFIG,
     FEATURES_HANDLER_CONFIG,
     KEYS_CONFIG,
+    TIME_TRACKER_DATA,
     BLOBS_COUNT,
 };
