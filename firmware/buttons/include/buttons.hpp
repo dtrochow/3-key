@@ -22,10 +22,19 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <vector>
 
 #include "buttons_config.hpp"
 #include "keys_config.hpp"
+
+constexpr uint DEBOUNCE_DELAY_MS = 200;
+
+typedef struct {
+    bool is_debouncing;
+    bool is_pending_handle;
+    uint gpio;
+} ButtonState_t;
 
 class Buttons {
   public:
@@ -39,7 +48,12 @@ class Buttons {
     void init();
     bool is_btn_pressed(const Button& btn) const;
     Key get_pressed_key() const;
+    uint get_pressed_key_id() const;
     uint8_t get_modifier_flags() const;
     uint get_btn_id(const Button& btn) const;
     std::vector<Button> get_btns() const;
+    void setup_button(uint gpio, uint key_id);
+
+    void clear_pending(uint key_id);
+    std::optional<uint> get_pending_button();
 };

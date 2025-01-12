@@ -69,7 +69,7 @@ void FeaturesHandler::switch_to_feature(FeatureType type) {
     (void)storage.save_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
 }
 
-void FeaturesHandler::handle(const Buttons& buttons) {
+void FeaturesHandler::handle(Buttons& buttons) {
     if (!config.is_feature_set)
         return;
 
@@ -78,4 +78,9 @@ void FeaturesHandler::handle(const Buttons& buttons) {
         return;
 
     it->second->handle(buttons);
+}
+
+std::string FeaturesHandler::get_feature_log(FeatureType f_type, uint log_id) const {
+    const auto& feature = features.at(f_type);
+    return feature->get_log(log_id);
 }

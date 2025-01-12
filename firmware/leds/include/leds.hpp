@@ -53,6 +53,8 @@ class Leds {
     void refresh() const;
     void enable_all(bool r = false);
     void disable_all(bool r = false);
+    LedsMode mode() const;
+    void update_led_states();
 
   private:
     void push_led(const Led& led) const;

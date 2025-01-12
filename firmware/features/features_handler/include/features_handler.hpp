@@ -45,8 +45,9 @@ class Feature {
     virtual ~Feature() = default;
 
     // Called on each HID task loop
-    virtual void handle(const Buttons& buttons) = 0;
-    virtual void init()                         = 0;
+    virtual void handle(Buttons& buttons)          = 0;
+    virtual void init()                            = 0;
+    virtual std::string get_log(uint log_id) const = 0;
 
   protected:
     KeysConfig& keys_config;
@@ -60,7 +61,8 @@ class FeaturesHandler {
     void init();
     void factory_init();
     void switch_to_feature(FeatureType type);
-    void handle(const Buttons& buttons);
+    void handle(Buttons& buttons);
+    std::string get_feature_log(FeatureType f_type, uint log_id) const;
 
   private:
     FeaturesHandlerConfig_t config;

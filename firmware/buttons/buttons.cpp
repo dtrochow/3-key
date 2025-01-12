@@ -24,13 +24,14 @@
 #include <cstdint>
 #include <limits>
 
+/*     key_id, button_state  */
+std::map<uint, ButtonState_t> button_map;
+
 Buttons::Buttons(KeysConfig& keys) : keys(keys) {}
 
 void Buttons::init() {
     for (const auto& cfg : keys.get_key_cfgs()) {
-        gpio_init(cfg.gpio);
-        gpio_set_dir(cfg.gpio, GPIO_IN);
-        gpio_pull_up(cfg.gpio);
+        setup_button(cfg.gpio, cfg.id);
     }
 }
 
@@ -43,6 +44,15 @@ Key Buttons::get_pressed_key() const {
         }
     }
     return Key::NONE;
+}
+
+uint Buttons::get_pressed_key_id() const {
+    for (const auto& cfg : keys.get_key_cfgs()) {
+        if (!gpio_get(cfg.gpio)) {
+            return cfg.id;
+        }
+    }
+    return std::numeric_limits<unsigned int>::max();
 }
 
 uint8_t Buttons::get_modifier_flags() const {
@@ -81,5 +91,68 @@ bool Buttons::is_btn_pressed(const Button& btn) const {
             return true;
         }
     }
+    return false;
+}
+
+void Buttons::setup_button(uint gpio, uint key_id) {
+    gpio_init(gpio);
+    gpio_set_dir(gpio, GPIO_IN);
+    gpio_pull_up(gpio);
+
+    button_map[key_id] = { false, false, gpio };
+}
+
+std::optional<uint> Buttons::get_pending_button() {
+    for (const auto& [key_id, button_state] : button_map) {
+        if (button_state.is_pending_handle) {
+            clear_pending(key_id);
+            return key_id;
+        }
+    }
+    return std::nullopt;
+}
+
+void Buttons::clear_pending(uint key_id) {
+    ButtonState_t& state    = button_map[key_id];
+    state.is_pending_handle = false;
+}
+
+uint get_key_id(uint gpio) {
+    for (const auto& [key_id, button_state] : button_map) {
+        if (button_state.gpio == gpio) {
+            return key_id;
+        }
+    }
+    return std::numeric_limits<unsigned int>::max();
+}
+
+void gpio_callback(uint gpio, uint32_t events) {
+    if (events & GPIO_IRQ_LEVEL_LOW) {
+        uint key_id          = get_key_id(gpio);
+        ButtonState_t& state = button_map[key_id];
+
+        if (!state.is_debouncing && !state.is_pending_handle) {
+            state.is_debouncing = true;
+
+            repeating_timer_t* debounce_timer = new repeating_timer_t;
+            add_repeating_timer_ms(DEBOUNCE_DELAY_MS, debounce_timer_callback, (void*)gpio, debounce_timer);
+
+            gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, false);
+        }
+    }
+}
+
+bool debounce_timer_callback(repeating_timer_t* timer) {
+    const uint gpio      = (uint)(uintptr_t)timer->user_data;
+    ButtonState_t& state = button_map[get_key_id(gpio)];
+
+    state.is_pending_handle = true;
+
+    gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, true);
+    state.is_debouncing = false;
+
+    cancel_repeating_timer(timer);
+    delete timer;
+
     return false;
 }

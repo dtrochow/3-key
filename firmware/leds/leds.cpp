@@ -21,6 +21,7 @@
 
 #include <ranges>
 
+#include "keys_config.hpp"
 #include "leds.hpp"
 #include "leds_config.hpp"
 #include "pico/stdlib.h"
@@ -110,15 +111,38 @@ void Leds::blink(uint led_id, uint count, float freq) {
     }
 }
 
+LedsMode Leds::mode() const {
+    return keys.get_leds_mode();
+}
+
+void Leds::update_led_states() {
+    for (int i = 0; i < leds.size(); i++) {
+        if (keys.is_enabled(i))
+            enable(i);
+        else
+            disable(i);
+    }
+}
+
 void leds_task(Leds& leds, const Buttons& buttons) {
-    const std::vector<Button> btns = buttons.get_btns();
-    for (const auto& btn : btns) {
-        const uint btn_id = buttons.get_btn_id(btn);
-        if (buttons.is_btn_pressed(btn)) {
-            leds.enable(btn_id);
-        } else {
-            leds.disable(btn_id);
+    switch (leds.mode()) {
+        case LedsMode::WHEN_BUTTON_PRESSED: {
+            const std::vector<Button> btns = buttons.get_btns();
+            for (const auto& btn : btns) {
+                const uint btn_id = buttons.get_btn_id(btn);
+                if (buttons.is_btn_pressed(btn)) {
+                    leds.enable(btn_id);
+                } else {
+                    leds.disable(btn_id);
+                }
+            }
+            break;
         }
+        case LedsMode::HANDLED_BY_FEATURE: {
+            leds.update_led_states();
+            break;
+        }
+        default: break;
     }
     leds.refresh();
 }

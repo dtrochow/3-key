@@ -28,11 +28,12 @@ class CtrlCVFeature : public Feature {
   public:
     explicit CtrlCVFeature(KeysConfig& keys_config)
     : Feature(keys_config), has_keyboard_key(false) {}
-    void handle(const Buttons& buttons);
+    void handle(Buttons& buttons);
 
   private:
     bool has_keyboard_key;
 
     void send_keys(const uint8_t key, const Buttons& buttons);
     void init();
+    std::string get_log(uint log_id) const;
 };
