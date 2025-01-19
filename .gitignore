@@ -40,4 +40,4 @@ build
 .venv
 site
 
-/build
+build
