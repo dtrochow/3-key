@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "time.hpp"
 #include <cstdint>
 #include <span>
 #include <vector>
@@ -52,7 +53,7 @@ enum class BinaryCommandStatus : uint8_t {
 
 class BinaryMode {
   public:
-    BinaryMode();
+    BinaryMode(Time& time);
     ~BinaryMode() = default;
 
     std::span<uint8_t> handle(uint8_t ch);
@@ -60,6 +61,7 @@ class BinaryMode {
     void check_binary_mode(uint8_t ch);
 
   private:
+    Time& time;
     bool binary_mode;
     std::vector<uint8_t> binary_buffer;
 

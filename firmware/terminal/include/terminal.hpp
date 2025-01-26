@@ -30,6 +30,7 @@
 
 #include "binary_mode.hpp"
 #include "text_mode.hpp"
+#include "time.hpp"
 
 class Terminal {
   private:
@@ -38,7 +39,7 @@ class Terminal {
     BinaryMode binary_mode;
 
   public:
-    Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler);
+    Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler, Time& time);
     ~Terminal() = default;
 
     std::span<uint8_t> terminal(char byte);

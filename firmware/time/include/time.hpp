@@ -19,18 +19,34 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "terminal.hpp"
-#include "binary_mode.hpp"
+#pragma once
 
-Terminal::Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler, Time& time)
-: text_mode(storage, keys, f_handler), binary_mode(time) {}
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
-std::span<uint8_t> Terminal::terminal(char byte) {
-    binary_mode.check_binary_mode(static_cast<uint8_t>(byte));
+typedef struct {
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+} DateTime_t;
 
-    if (binary_mode.is_binary_mode()) {
-        return binary_mode.handle(static_cast<uint8_t>(byte));
-    } else {
-        return text_mode.handle(byte);
-    }
-}
+class Time {
+  public:
+    Time();
+    ~Time();
+
+    uint64_t get_current_time_us() const;
+    uint64_t get_current_time_ms() const;
+    uint64_t get_current_time_s() const;
+    DateTime_t get_current_date_and_time() const;
+    std::string get_current_date_and_time_string() const;
+    void set_current_time_us(uint64_t time_us);
+
+  private:
+    uint64_t current_time_us;
+};

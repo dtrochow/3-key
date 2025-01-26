@@ -23,9 +23,11 @@
 #include "features.hpp"
 #include "keys_config.hpp"
 #include "storage.hpp"
+#include "time.hpp"
+#include "time_tracker.hpp"
 
-FeaturesHandler::FeaturesHandler(Storage& storage, KeysConfig& keys_config)
-: storage(storage), keys_config(keys_config) {}
+FeaturesHandler::FeaturesHandler(Storage& storage, KeysConfig& keys_config, Time& time)
+: storage(storage), keys_config(keys_config), time(time) {}
 
 void FeaturesHandler::init() {
     (void)storage.get_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
@@ -42,7 +44,7 @@ void FeaturesHandler::init() {
 
 void FeaturesHandler::initialize_features() {
     features[FeatureType::CTRL_C_V]     = std::make_unique<CtrlCVFeature>(keys_config);
-    features[FeatureType::TIME_TRACKER] = std::make_unique<TimeTracker>(keys_config, storage);
+    features[FeatureType::TIME_TRACKER] = std::make_unique<TimeTracker>(keys_config, storage, time);
 }
 
 void FeaturesHandler::factory_init() {

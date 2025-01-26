@@ -9,4 +9,5 @@ target_link_libraries(${modulename}
     buttons
     ctrl_c_v
     time_tracker
+    time
 )

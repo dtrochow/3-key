@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <cstring>
 
-BinaryMode::BinaryMode() : binary_mode(false) {}
+BinaryMode::BinaryMode(Time& time) : binary_mode(false), time(time) {}
 
 std::span<uint8_t> BinaryMode::handle(uint8_t ch) {
     binary_buffer.push_back(ch);
@@ -152,6 +152,7 @@ std::span<uint8_t> BinaryMode::handle_sync_time_command(const std::vector<uint8_
 
         uint64_t received_time;
         std::memcpy(&received_time, payload.data(), sizeof(received_time));
+        time.set_current_time_us(received_time);
     } else {
         /* READ */
         return create_binary_response(BinaryCommandID::SYNC_TIME, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
