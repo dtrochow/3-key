@@ -53,9 +53,15 @@ plugins:
         - read_excel
 nav:
   - Home: index.md
+  - Features:
+      - CTRL+C/V: features/ctrl_c_v.md
+      - Time-Tracker: features/time_tracker.md
+  - Terminal:
+      - Text Mode: terminal/text_mode.md
+      - Binary Mode: terminal/binary_mode.md
   - Hardware: hardware.md
   - Development:
       - Environment & Tools: development.md
-      - Features: features.md
+      - Adding Features: adding_features.md
   - Blog: blog/index.md
 exclude_docs: README.md
