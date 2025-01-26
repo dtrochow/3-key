@@ -13,7 +13,15 @@ project(${project_name} C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+
+# Check environment variable BUILD_TYPE and set CMAKE_BUILD_TYPE
+if(DEFINED ENV{BUILD_TYPE})
+    message(STATUS "Environment variable BUILD_TYPE is set to $ENV{BUILD_TYPE}")
+    set(CMAKE_BUILD_TYPE $ENV{BUILD_TYPE} CACHE STRING "Build type" FORCE)
+else()
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    message(STATUS "Environment variable BUILD_TYPE is not set. Defaulting to Debug.")
+endif()
 
 set(CMAKE_C_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")

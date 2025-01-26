@@ -11,6 +11,7 @@ on:
 
 env:
     PICO_SDK_PATH: "/tmp/deps/pico-sdk"
+    BUILD_TYPE: "Release"
 
 jobs:
   build_firmware:
