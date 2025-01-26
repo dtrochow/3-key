@@ -31,7 +31,7 @@
 #include "storage.hpp"
 
 typedef struct {
-    uint id;
+    uint key_id;
     Button key;
     Color color;
 } KeyConfigTableEntry_t;
@@ -136,7 +136,7 @@ class KeysConfig {
         if (key_id >= config.keys_count) {
             return;
         }
-        config.keys[key_id].value = btn;
+        config.keys[key_id].key_value = btn;
         storage.save_blob(BlobType::KEYS_CONFIG, config);
     }
 
@@ -151,6 +151,6 @@ class KeysConfig {
         if (key_id >= config.keys_count) {
             return Key::NONE;
         }
-        return config.keys[key_id].value;
+        return config.keys[key_id].key_value;
     }
 };

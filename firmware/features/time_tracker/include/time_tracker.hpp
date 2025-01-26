@@ -26,7 +26,16 @@
 
 #include "pico/stdlib.h"
 
+#define MICROSECONDS_IN_SECOND_COUNT 1'000'000
+#define SECONDS_IN_HOUR_COUNT 3600
+#define SECONDS_IN_MINUTE_COUNT 60
+
 #define MAX_TIME_TRACKER_ENTRIES_COUNT 31
+
+enum class TimeTrackerLog : uint {
+    CURRENT_WORK_TIME_REPORT     = 0,
+    CURRENT_MEETINGS_TIME_REPORT = 1,
+};
 
 typedef struct {
     uint64_t start_time_us;
