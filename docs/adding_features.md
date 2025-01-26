@@ -1,4 +1,4 @@
-# Features
+# Adding Features
 
 ## Adding a New Feature to the Project
 This guide provides a step-by-step approach to add and integrate a new feature into the project. Each feature should be implemented as a module under the features directory.
