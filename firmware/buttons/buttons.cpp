@@ -24,6 +24,9 @@
 #include <cstdint>
 #include <limits>
 
+static bool debounce_timer_callback(repeating_timer_t* timer);
+static uint get_key_id(uint gpio);
+
 /*     key_id, button_state  */
 std::map<uint, ButtonState_t> button_map;
 
@@ -117,7 +120,7 @@ void Buttons::clear_pending(uint key_id) {
     state.is_pending_handle = false;
 }
 
-uint get_key_id(uint gpio) {
+static uint get_key_id(uint gpio) {
     for (const auto& [key_id, button_state] : button_map) {
         if (button_state.gpio == gpio) {
             return key_id;
@@ -142,7 +145,7 @@ void gpio_callback(uint gpio, uint32_t events) {
     }
 }
 
-bool debounce_timer_callback(repeating_timer_t* timer) {
+static bool debounce_timer_callback(repeating_timer_t* timer) {
     const uint gpio      = (uint)(uintptr_t)timer->user_data;
     ButtonState_t& state = button_map[get_key_id(gpio)];
 

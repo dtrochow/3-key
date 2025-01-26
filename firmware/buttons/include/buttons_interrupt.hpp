@@ -22,5 +22,3 @@
 #pragma once
 
 void gpio_callback(uint gpio, uint32_t events);
-bool debounce_timer_callback(repeating_timer_t* timer);
-uint get_key_id(uint gpio);
