@@ -27,14 +27,15 @@
 
 void TimeTracker::init() {
     const std::vector<KeyConfigTableEntry_t> keys = {
+        /* key_id key_value color */
         { 0, Key::NONE, Color::Red },
         { 1, Key::NONE, Color::Green },
         { 2, Key::NONE, Color::Blue },
     };
 
     for (const auto& entry : keys) {
-        keys_config.set_key_color(entry.id, entry.color);
-        keys_config.set_key_value(entry.id, entry.key);
+        keys_config.set_key_color(entry.key_id, entry.color);
+        keys_config.set_key_value(entry.key_id, entry.key);
     }
 
     storage.get_blob(BlobType::TIME_TRACKER_DATA, data);
@@ -64,11 +65,12 @@ bool TimeTracker::is_factory_required() {
     return (data.magic != BLOB_MAGIC);
 }
 
-void TimeTracker::tracker(const uint key, const Buttons& buttons) {
+void TimeTracker::tracker(const uint key_id, const Buttons& buttons) {
     const uint64_t current_time_us = time_us_64();
     auto& entry                    = data.tracking_entries[data.current_entry];
+    auto& new_entry                = data.tracking_entries[data.current_entry];
 
-    switch (key) {
+    switch (key_id) {
         case 0:
             if (entry.tracking_work) {
                 entry.work_time_us += (current_time_us - entry.start_time_us);
@@ -123,13 +125,15 @@ void TimeTracker::tracker(const uint key, const Buttons& buttons) {
                 data.current_entry = 0;
             }
 
-            auto& new_entry             = data.tracking_entries[data.current_entry];
             new_entry.start_time_us     = 0;
             new_entry.work_time_us      = 0;
             new_entry.meeting_time_us   = 0;
             new_entry.tracking_work     = false;
             new_entry.tracking_meetings = false;
             break;
+
+        /* Unexpected key_id */
+        default: return;
     }
     storage.save_blob(BlobType::TIME_TRACKER_DATA, data);
 }
@@ -145,21 +149,21 @@ void TimeTracker::handle(Buttons& buttons) {
 std::string TimeTracker::get_log(uint log_id) const {
     std::string log;
     auto& entry = data.tracking_entries[data.current_entry];
-    switch (log_id) {
-        case 0: {
-            const uint64_t total_seconds = entry.work_time_us / 1'000'000;
-            const uint64_t hours         = total_seconds / 3600;
-            const uint64_t minutes       = (total_seconds % 3600) / 60;
-            const uint64_t seconds       = total_seconds % 60;
+    switch (static_cast<TimeTrackerLog>(log_id)) {
+        case TimeTrackerLog::CURRENT_WORK_TIME_REPORT: {
+            const uint64_t total_seconds = entry.work_time_us / MICROSECONDS_IN_SECOND_COUNT;
+            const uint64_t hours         = (total_seconds / SECONDS_IN_HOUR_COUNT);
+            const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
+            const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
 
             log = "Work: " + std::to_string(hours) + "h " + std::to_string(minutes) + "min " +
                 std::to_string(seconds) + "s";
         } break;
-        case 1: {
-            const uint64_t total_seconds = entry.meeting_time_us / 1'000'000;
-            const uint64_t hours         = total_seconds / 3600;
-            const uint64_t minutes       = (total_seconds % 3600) / 60;
-            const uint64_t seconds       = total_seconds % 60;
+        case TimeTrackerLog::CURRENT_MEETINGS_TIME_REPORT: {
+            const uint64_t total_seconds = entry.meeting_time_us / MICROSECONDS_IN_SECOND_COUNT;
+            const uint64_t hours         = (total_seconds / SECONDS_IN_HOUR_COUNT);
+            const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
+            const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
 
             log = "Meetings: " + std::to_string(hours) + "h " + std::to_string(minutes) + "min " +
                 std::to_string(seconds) + "s";

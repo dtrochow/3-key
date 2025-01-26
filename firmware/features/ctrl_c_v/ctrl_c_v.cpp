@@ -26,14 +26,15 @@
 
 void CtrlCVFeature::init() {
     const std::vector<KeyConfigTableEntry_t> keys = {
+        /* key_id key_value color */
         { 0, Key::V, Color::Red },
         { 1, Key::C, Color::Green },
         { 2, Modifier::LEFT_CMD, Color::Blue },
     };
 
     for (const auto& entry : keys) {
-        keys_config.set_key_color(entry.id, entry.color);
-        keys_config.set_key_value(entry.id, entry.key);
+        keys_config.set_key_color(entry.key_id, entry.color);
+        keys_config.set_key_value(entry.key_id, entry.key);
     }
 
     keys_config.switch_leds_mode(LedsMode::WHEN_BUTTON_PRESSED);

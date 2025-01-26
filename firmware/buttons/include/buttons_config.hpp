@@ -41,9 +41,9 @@ enum Modifier : uint8_t {
 using Button = std::variant<Key, Modifier>;
 
 struct ButtonConfig {
-    uint id;
+    uint button_id;
     uint gpio;
-    Button value;
+    Button key_value;
     Color color;
     bool enabled;
 };
