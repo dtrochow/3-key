@@ -64,6 +64,7 @@ class FeaturesHandler {
     void switch_to_feature(FeatureType type);
     void handle(Buttons& buttons);
     std::string get_feature_log(FeatureType f_type, uint log_id) const;
+    FeatureType get_current_feature() const;
 
   private:
     FeaturesHandlerConfig_t config;

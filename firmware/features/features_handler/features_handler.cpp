@@ -88,3 +88,7 @@ std::string FeaturesHandler::get_feature_log(FeatureType f_type, uint log_id) co
     const auto& feature = features.at(f_type);
     return feature->get_log(log_id);
 }
+
+FeatureType FeaturesHandler::get_current_feature() const {
+    return config.current_feature;
+}
