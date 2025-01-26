@@ -23,6 +23,7 @@
 
 #include "buttons.hpp"
 #include "features_handler.hpp"
+#include "time.hpp"
 
 #include "pico/stdlib.h"
 
@@ -43,6 +44,7 @@ typedef struct {
     uint64_t meeting_time_us;
     bool tracking_work;
     bool tracking_meetings;
+    DateTime_t tracking_date;
 } TimeTrackingEntry_t;
 
 typedef struct {
@@ -53,18 +55,21 @@ typedef struct {
 
 class TimeTracker : public Feature {
   public:
-    explicit TimeTracker(KeysConfig& keys_config, Storage& storage)
-    : Feature(keys_config), storage(storage) {}
+    explicit TimeTracker(KeysConfig& keys_config, Storage& storage, Time& time)
+    : Feature(keys_config), storage(storage), time(time) {}
     void handle(Buttons& buttons);
 
   private:
     TimeTrackerData_t data;
     Storage& storage;
+    Time& time;
 
+    void set_tracking_date();
     void tracker(const uint key, const Buttons& buttons);
     void init();
     std::string get_log(uint log_id) const;
 
     void factory_init();
-    bool is_factory_required();
+    bool is_factory_required() const;
+    bool is_date_empty(DateTime_t& date_time) const;
 };

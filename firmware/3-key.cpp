@@ -31,6 +31,7 @@
 #include "leds.hpp"
 #include "storage.hpp"
 #include "terminal.hpp"
+#include "time.hpp"
 #include "tud.hpp"
 
 Leds* g_leds       = nullptr;
@@ -70,10 +71,12 @@ int main(void) {
     g_leds    = &leds;
     multicore_launch_core1(leds_task_on_core1);
 
-    FeaturesHandler f_handler(storage, keys);
+    Time time;
+
+    FeaturesHandler f_handler(storage, keys, time);
     f_handler.init();
 
-    Terminal t(storage, keys, f_handler);
+    Terminal t(storage, keys, f_handler, time);
     CdcDevice cdc(t);
 
     initialize_tud();

@@ -11,4 +11,5 @@ target_link_libraries(${modulename}
         storage
         keyscfg
         features_handler
+        time
 )

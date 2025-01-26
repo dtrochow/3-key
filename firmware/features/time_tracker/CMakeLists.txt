@@ -8,4 +8,5 @@ target_link_libraries(${modulename}
     pico_stdlib 
     features_handler
     usb
+    time
 )

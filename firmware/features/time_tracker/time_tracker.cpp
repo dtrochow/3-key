@@ -23,6 +23,7 @@
 
 #include "keys_config.hpp"
 #include "storage_config.hpp"
+#include "time.hpp"
 #include "time_tracker.hpp"
 
 void TimeTracker::init() {
@@ -43,6 +44,7 @@ void TimeTracker::init() {
         factory_init();
 
     keys_config.switch_leds_mode(LedsMode::HANDLED_BY_FEATURE);
+    set_tracking_date();
 }
 
 void TimeTracker::factory_init() {
@@ -54,6 +56,7 @@ void TimeTracker::factory_init() {
         entry.meeting_time_us   = 0;
         entry.tracking_work     = false;
         entry.tracking_meetings = false;
+        entry.tracking_date     = {};
     }
 
     data.current_entry = 0;
@@ -61,8 +64,14 @@ void TimeTracker::factory_init() {
     storage.save_blob(BlobType::TIME_TRACKER_DATA, data);
 }
 
-bool TimeTracker::is_factory_required() {
+bool TimeTracker::is_factory_required() const {
     return (data.magic != BLOB_MAGIC);
+}
+
+void TimeTracker::set_tracking_date() {
+    auto& entry = data.tracking_entries[data.current_entry];
+    if (is_date_empty(entry.tracking_date))
+        entry.tracking_date = time.get_current_date_and_time();
 }
 
 void TimeTracker::tracker(const uint key_id, const Buttons& buttons) {
@@ -72,6 +81,7 @@ void TimeTracker::tracker(const uint key_id, const Buttons& buttons) {
 
     switch (key_id) {
         case 0:
+            set_tracking_date();
             if (entry.tracking_work) {
                 entry.work_time_us += (current_time_us - entry.start_time_us);
                 entry.start_time_us = 0;
@@ -90,6 +100,7 @@ void TimeTracker::tracker(const uint key_id, const Buttons& buttons) {
             break;
 
         case 1:
+            set_tracking_date();
             if (entry.tracking_meetings) {
                 entry.meeting_time_us += (current_time_us - entry.start_time_us);
                 entry.start_time_us     = 0;
@@ -156,8 +167,8 @@ std::string TimeTracker::get_log(uint log_id) const {
             const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
             const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
 
-            log = "Work: " + std::to_string(hours) + "h " + std::to_string(minutes) + "min " +
-                std::to_string(seconds) + "s";
+            log = time.get_current_date_and_time_string() + " Work: " + std::to_string(hours) +
+                "h " + std::to_string(minutes) + "min " + std::to_string(seconds) + "s";
         } break;
         case TimeTrackerLog::CURRENT_MEETINGS_TIME_REPORT: {
             const uint64_t total_seconds = entry.meeting_time_us / MICROSECONDS_IN_SECOND_COUNT;
@@ -165,10 +176,15 @@ std::string TimeTracker::get_log(uint log_id) const {
             const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
             const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
 
-            log = "Meetings: " + std::to_string(hours) + "h " + std::to_string(minutes) + "min " +
-                std::to_string(seconds) + "s";
+            log = time.get_current_date_and_time_string() + "Meetings: " + std::to_string(hours) +
+                "h " + std::to_string(minutes) + "min " + std::to_string(seconds) + "s";
         } break;
         default: log = "Invalid log ID";
     }
     return log;
+}
+
+bool TimeTracker::is_date_empty(DateTime_t& date_time) const {
+    return ((date_time.day == 0) && (date_time.hour == 0) && (date_time.minute == 0) &&
+        (date_time.year == 0) && (date_time.month == 0) && (date_time.day == 0));
 }

@@ -45,6 +45,7 @@ add_subdirectory(storage)
 add_subdirectory(terminal)
 add_subdirectory(keyscfg)
 add_subdirectory(features)
+add_subdirectory(time)
 
 target_link_libraries(${project_name} 
     pico_stdlib 
@@ -56,6 +57,7 @@ target_link_libraries(${project_name}
     terminal
     keyscfg
     features_handler
+    time
 )
 
 pico_add_extra_outputs(${project_name})

@@ -24,6 +24,7 @@
 #include "buttons.hpp"
 #include "keys_config.hpp"
 #include "storage.hpp"
+#include "time.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -56,7 +57,7 @@ class Feature {
 
 class FeaturesHandler {
   public:
-    FeaturesHandler(Storage& storage, KeysConfig& keys_config);
+    FeaturesHandler(Storage& storage, KeysConfig& keys_config, Time& time);
     ~FeaturesHandler() = default;
 
     void init();
@@ -71,6 +72,7 @@ class FeaturesHandler {
     Storage& storage;
     std::unordered_map<FeatureType, std::unique_ptr<Feature>> features;
     KeysConfig& keys_config;
+    Time& time;
 
     void initialize_features();
     bool is_factory_required() const;
