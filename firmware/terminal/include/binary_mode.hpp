@@ -23,6 +23,7 @@
 
 #include "time.hpp"
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <vector>
 
@@ -39,8 +40,9 @@ enum class BinaryCommandType : uint8_t {
 };
 
 enum class BinaryCommandID : uint8_t {
-    SYNC_TIME = 0x01,
-    UNKNOWN   = 0xFF,
+    SYNC_TIME   = 0x01,
+    TIME_REPORT = 0x02,
+    UNKNOWN     = 0xFF,
 };
 
 enum class BinaryCommandStatus : uint8_t {
@@ -65,7 +67,9 @@ class BinaryMode {
     bool binary_mode;
     std::vector<uint8_t> binary_buffer;
 
-    std::span<uint8_t> create_binary_response(BinaryCommandID command_id, BinaryCommandStatus status);
+    std::span<uint8_t> create_binary_response(BinaryCommandID command_id,
+        BinaryCommandStatus status,
+        std::optional<std::span<uint8_t>> payload = std::nullopt);
     std::span<uint8_t> handle_binary_packet(const std::vector<uint8_t>& packet);
     uint32_t calculate_crc32(const uint8_t* data, size_t length);
 

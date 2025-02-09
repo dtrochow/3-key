@@ -116,7 +116,9 @@ uint32_t BinaryMode::calculate_crc32(const uint8_t* data, size_t length) {
     return ~crc;
 }
 
-std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id, BinaryCommandStatus status) {
+std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id,
+    BinaryCommandStatus status,
+    std::optional<std::span<uint8_t>> payload) {
     std::vector<uint8_t> response;
 
     response.push_back(BINARY_HEADER_2);
@@ -125,8 +127,15 @@ std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id
     response.push_back(static_cast<uint8_t>(status));
     response.push_back(static_cast<uint8_t>(command_id));
 
-    /* There is no payload, so the payload_length field will be all zeros */
-    response.insert(response.end(), BINARY_MODE_LENGTH_FIELD_SIZE_BYTES, 0x00);
+    const uint32_t payload_length = payload ? static_cast<uint32_t>(payload->size()) : 0;
+    response.push_back(static_cast<uint8_t>(payload_length & 0xFF));
+    response.push_back(static_cast<uint8_t>((payload_length >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((payload_length >> 16) & 0xFF));
+    response.push_back(static_cast<uint8_t>((payload_length >> 24) & 0xFF));
+
+    if (payload) {
+        response.insert(response.end(), payload->begin(), payload->end());
+    }
 
     const uint32_t crc = calculate_crc32(response.data(), response.size());
     uint8_t crc_bytes[sizeof(crc)];
@@ -143,6 +152,7 @@ std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id
 std::span<uint8_t> BinaryMode::handle_sync_time_command(const std::vector<uint8_t>& payload,
     BinaryCommandType cmd_type) {
     constexpr size_t sync_time_payload_size = 8;
+    std::span<uint8_t> response_payload     = {};
 
     if (cmd_type == BinaryCommandType::WRITE) {
         const size_t size = payload.size();
@@ -155,7 +165,18 @@ std::span<uint8_t> BinaryMode::handle_sync_time_command(const std::vector<uint8_
         time.set_current_time_us(received_time);
     } else {
         /* READ */
-        return create_binary_response(BinaryCommandID::SYNC_TIME, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
+        const uint64_t current_time = time.get_current_time_us();
+        std::array<uint8_t, sizeof(uint64_t)> time_bytes;
+        std::memcpy(time_bytes.data(), &current_time, sizeof(current_time));
+        response_payload = std::span<uint8_t>(time_bytes);
     }
-    return create_binary_response(BinaryCommandID::SYNC_TIME, BinaryCommandStatus::SUCCESS);
+    return create_binary_response(BinaryCommandID::SYNC_TIME, BinaryCommandStatus::SUCCESS, response_payload);
 }
+
+/*
+Time Tracker report
+- time tracking slot is provided in payload
+- depending on mode the report should be returned by slot_id or date
+- if multiple reports from the same date, then return the first one
+- there will be a separate command for returning all available reports
+*/

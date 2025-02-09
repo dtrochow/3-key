@@ -24,3 +24,4 @@ set(FIRMWARE_PATH ${CMAKE_CURRENT_LIST_DIR}/../firmware)
 # -------------------------------------------------------------------------- #
 
 add_subdirectory(${FIRMWARE_PATH}/time/test ${CMAKE_CURRENT_BINARY_DIR}/time_test)
+add_subdirectory(${FIRMWARE_PATH}/terminal/test ${CMAKE_CURRENT_BINARY_DIR}/terminal_test)
