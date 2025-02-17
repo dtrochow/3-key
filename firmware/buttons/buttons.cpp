@@ -21,16 +21,22 @@
 
 #include "buttons.hpp"
 #include "buttons_config.hpp"
+#include "keys_config.hpp"
 #include <cstdint>
 #include <limits>
 
 static bool debounce_timer_callback(repeating_timer_t* timer);
+static bool long_press_timer_callback(repeating_timer_t* timer);
 static uint get_key_id(uint gpio);
 
 /*     key_id, button_state  */
 std::map<uint, ButtonState_t> button_map;
 
-Buttons::Buttons(KeysConfig& keys) : keys(keys) {}
+static KeysConfig* keys_gp = nullptr;
+
+Buttons::Buttons(KeysConfig& keys) : keys(keys) {
+    keys_gp = &keys;
+}
 
 void Buttons::init() {
     for (const auto& cfg : keys.get_key_cfgs()) {
@@ -102,14 +108,15 @@ void Buttons::setup_button(uint gpio, uint key_id) {
     gpio_set_dir(gpio, GPIO_IN);
     gpio_pull_up(gpio);
 
-    button_map[key_id] = { false, false, gpio };
+    button_map[key_id] = { .is_debouncing = false, .is_pending_handle = false, .gpio = gpio, .key_id = key_id };
 }
 
-std::optional<uint> Buttons::get_pending_button() {
+std::optional<ButtonState_t> Buttons::get_pending_button() {
     for (const auto& [key_id, button_state] : button_map) {
         if (button_state.is_pending_handle) {
+            const ButtonState_t button_state_cpy = button_state;
             clear_pending(key_id);
-            return key_id;
+            return button_state_cpy;
         }
     }
     return std::nullopt;
@@ -118,6 +125,8 @@ std::optional<uint> Buttons::get_pending_button() {
 void Buttons::clear_pending(uint key_id) {
     ButtonState_t& state    = button_map[key_id];
     state.is_pending_handle = false;
+    state.is_long_press     = false;
+    state.is_debouncing     = false;
 }
 
 static uint get_key_id(uint gpio) {
@@ -131,7 +140,7 @@ static uint get_key_id(uint gpio) {
 
 void gpio_callback(uint gpio, uint32_t events) {
     if (events & GPIO_IRQ_LEVEL_LOW) {
-        uint key_id          = get_key_id(gpio);
+        const uint key_id    = get_key_id(gpio);
         ButtonState_t& state = button_map[key_id];
 
         if (!state.is_debouncing && !state.is_pending_handle) {
@@ -146,16 +155,58 @@ void gpio_callback(uint gpio, uint32_t events) {
 }
 
 static bool debounce_timer_callback(repeating_timer_t* timer) {
+    constexpr uint LONG_PRESS_CHECK_DELAY_MS = 100;
+
     const uint gpio      = (uint)(uintptr_t)timer->user_data;
     ButtonState_t& state = button_map[get_key_id(gpio)];
 
-    state.is_pending_handle = true;
-
-    gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, true);
-    state.is_debouncing = false;
+    if (!gpio_get(gpio)) {
+        state.long_press_timer      = new repeating_timer_t;
+        state.long_press_start_time = to_ms_since_boot(get_absolute_time());
+        add_repeating_timer_ms(LONG_PRESS_CHECK_DELAY_MS, long_press_timer_callback, (void*)gpio,
+            state.long_press_timer);
+    } else {
+        state.is_pending_handle = true;
+        state.is_debouncing     = false;
+        gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, true);
+    }
 
     cancel_repeating_timer(timer);
     delete timer;
+
+    return false;
+}
+
+static bool long_press_timer_callback(repeating_timer_t* timer) {
+    const uint gpio      = (uint)(uintptr_t)timer->user_data;
+    ButtonState_t& state = button_map[get_key_id(gpio)];
+
+    if (!gpio_get(gpio)) {
+        const uint64_t now        = to_ms_since_boot(get_absolute_time());
+        const uint64_t elapsed_ms = (now - state.long_press_start_time);
+
+        if (elapsed_ms >= keys_gp->get_long_press_delay_ms()) {
+            state.is_long_press     = true;
+            state.is_pending_handle = true;
+            state.is_debouncing     = false;
+            gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, true);
+
+            cancel_repeating_timer(timer);
+            delete timer;
+            state.long_press_timer = nullptr;
+        } else {
+            /* Continue repeating */
+            return true;
+        }
+    } else {
+        state.is_pending_handle = true;
+        state.is_debouncing     = false;
+        gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, true);
+
+        cancel_repeating_timer(timer);
+        delete timer;
+        state.long_press_timer = nullptr;
+    }
 
     return false;
 }

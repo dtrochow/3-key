@@ -36,7 +36,8 @@ typedef struct {
     Color color;
 } KeyConfigTableEntry_t;
 
-#define MAX_KEYS_COUNT 10
+constexpr uint MAX_KEYS_COUNT              = 10;
+constexpr uint LONG_PRESS_DELAY_MS_DEFAULT = 350;
 
 enum class LedsMode {
     WHEN_BUTTON_PRESSED,
@@ -69,7 +70,7 @@ class KeysConfig {
 
     void factory_init(const std::vector<ButtonConfig>& keys_default) {
         config.magic      = BLOB_MAGIC;
-        config.keys_count = std::min(static_cast<int>(keys_default.size()), MAX_KEYS_COUNT);
+        config.keys_count = std::min(static_cast<uint>(keys_default.size()), MAX_KEYS_COUNT);
 
         for (uint32_t i = 0; i < config.keys_count; ++i) {
             config.keys[i] = keys_default[i];
@@ -82,6 +83,7 @@ class KeysConfig {
     KeysConfig_t config;
     Storage& storage;
     LedsMode leds_mode;
+    uint long_press_delay_ms = LONG_PRESS_DELAY_MS_DEFAULT;
 
     bool is_factory_required() { return (config.magic != BLOB_MAGIC); }
 
@@ -153,4 +155,7 @@ class KeysConfig {
         }
         return config.keys[key_id].key_value;
     }
+
+    void set_long_press_delay_ms(uint delay_ms) { long_press_delay_ms = delay_ms; }
+    uint get_long_press_delay_ms() const { return long_press_delay_ms; }
 };

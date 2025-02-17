@@ -20,6 +20,7 @@
  */
 
 #include "text_mode.hpp"
+#include "features_handler.hpp"
 #include "pico/bootrom.h"
 #include "time_tracker.hpp"
 #include <sstream>
@@ -105,6 +106,9 @@ bool TextMode::dispatch_command(Command command, const std::vector<std::string>&
         case Command::TIME: {
             return handle_time_command(params);
         }
+        case Command::LONG_PRESS_MS: {
+            return handle_long_press_ms_command(params);
+        }
         default: return false;
     }
 }
@@ -150,8 +154,11 @@ bool TextMode::handle_change_color_command(const std::vector<std::string>& param
 }
 
 bool TextMode::handle_feature_command(const std::vector<std::string>& params) {
-    if (params.size() != 1) {
-        add_log("Error: feature requires exactly 1 parameter");
+    if (params.size() == 0) {
+        add_log("Current feature: " + f_handler.get_current_feature_name());
+        return true;
+    } else if (params.size() > 1) {
+        add_log("Error: Too many arguments");
         return false;
     }
 
@@ -200,6 +207,24 @@ bool TextMode::handle_time_command(const std::vector<std::string>& params) {
     }
 
     add_log(log);
+    return true;
+}
+
+bool TextMode::handle_long_press_ms_command(const std::vector<std::string>& params) {
+    if (params.size() != 1) {
+        add_log("Error: 1 argument required");
+        return false;
+    }
+
+    if (!is_valid_number(params[0])) {
+        add_log("Error: Invalid argument");
+        return false;
+    }
+
+    const uint long_press_ms = std::stoul(params[0]);
+    keys.set_long_press_delay_ms(long_press_ms);
+    add_log("Long press delay set to " + std::to_string(long_press_ms) + "ms");
+
     return true;
 }
 
