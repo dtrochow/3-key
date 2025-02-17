@@ -152,8 +152,11 @@ void TimeTracker::tracker(const uint key_id, const Buttons& buttons) {
 void TimeTracker::handle(Buttons& buttons) {
     const auto pressed_key = buttons.get_pending_button();
     if (pressed_key.has_value()) {
-        const uint key_id = pressed_key.value();
-        tracker(key_id, buttons);
+        const ButtonState_t button_state = pressed_key.value();
+        const uint key_id                = button_state.key_id;
+        if (!button_state.is_long_press) {
+            tracker(key_id, buttons);
+        }
     }
 }
 

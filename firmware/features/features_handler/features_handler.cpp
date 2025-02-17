@@ -94,3 +94,12 @@ std::string FeaturesHandler::get_feature_log(FeatureType f_type, uint log_id) co
 FeatureType FeaturesHandler::get_current_feature() const {
     return config.current_feature;
 }
+
+std::string FeaturesHandler::get_current_feature_name() const {
+    switch (config.current_feature) {
+        case FeatureType::CTRL_C_V: return "ctrl_c_v";
+        case FeatureType::TIME_TRACKER: return "time-tracker";
+        case FeatureType::NONE: return "none";
+    }
+    return "unknown";
+}

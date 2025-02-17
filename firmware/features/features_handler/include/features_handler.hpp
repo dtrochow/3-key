@@ -27,6 +27,7 @@
 #include "time.hpp"
 
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 enum class FeatureType {
@@ -66,6 +67,7 @@ class FeaturesHandler {
     void handle(Buttons& buttons);
     std::string get_feature_log(FeatureType f_type, uint log_id) const;
     FeatureType get_current_feature() const;
+    std::string get_current_feature_name() const;
 
   private:
     FeaturesHandlerConfig_t config;

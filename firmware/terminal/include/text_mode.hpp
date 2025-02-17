@@ -37,6 +37,7 @@ enum class Command {
     CHANGE_COLOR,
     FEATURE,
     TIME,
+    LONG_PRESS_MS,
     UNKNOWN,
 };
 
@@ -74,6 +75,7 @@ class TextMode {
         { "color", Command::CHANGE_COLOR },
         { "feature", Command::FEATURE },
         { "time", Command::TIME },
+        { "long_press_ms", Command::LONG_PRESS_MS },
     };
 
     /* Commands handling */
@@ -81,4 +83,5 @@ class TextMode {
     bool handle_change_color_command(const std::vector<std::string>& params);
     bool handle_feature_command(const std::vector<std::string>& params);
     bool handle_time_command(const std::vector<std::string>& params);
+    bool handle_long_press_ms_command(const std::vector<std::string>& params);
 };

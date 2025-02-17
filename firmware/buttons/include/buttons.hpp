@@ -23,19 +23,25 @@
 
 #include <map>
 #include <optional>
+#include <pico/time.h>
 #include <vector>
 
 #include "buttons_config.hpp"
 #include "keys_config.hpp"
 
-constexpr uint DEBOUNCE_DELAY_MS = 200;
+constexpr uint DEBOUNCE_DELAY_MS = 100;
 
 typedef struct {
     bool is_debouncing;
     bool is_pending_handle;
     uint gpio;
+    uint key_id;
+    bool is_long_press;
+    repeating_timer_t* long_press_timer;
+    uint long_press_start_time;
 } ButtonState_t;
 
+/* TODO: Make Buttons class Singleton */
 class Buttons {
   public:
     explicit Buttons(KeysConfig& keys);
@@ -55,5 +61,7 @@ class Buttons {
     void setup_button(uint gpio, uint key_id);
 
     void clear_pending(uint key_id);
-    std::optional<uint> get_pending_button();
+    std::optional<ButtonState_t> get_pending_button();
+
+    void set_long_press_delay(uint delay_ms);
 };
