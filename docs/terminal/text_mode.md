@@ -58,8 +58,8 @@ Changes the color of a specific button.
 
 **Parameters**
 
-- <button_id>: Numeric ID of the button (must be a valid button ID)
-- <color>: Color name (red, green, or blue)
+- `<button_id>`: Numeric ID of the button (must be a valid button ID)
+- `<color>`: Color name (red, green, or blue)
 
 **Example**
 ```bash
@@ -110,6 +110,7 @@ Fetches time-tracking logs for different categories.
 ```
 
 **Parameters**
+
 - `<category>`: Time log category. Supported values:
     - `work`: Fetches work time logs
     - `meetings`: Fetches meeting time logs
@@ -123,6 +124,31 @@ Fetches time-tracking logs for different categories.
 
 - Retrieves time logs for the specified category
 - Returns an error if the time-tracker feature is not active
+
+---
+
+### 6. `long_press_ms`
+Sets the buttons long press delay value in milliseconds.
+
+**Usage**
+```bash
+3-key>long_press_ms <delay_ms>
+```
+
+**Parameters**
+
+- `<delay_ms>`: The delay value in milliseconds for detecting a long press. Must be a valid number.
+
+**Example**
+```bash
+3-key>long_press_ms 800
+```
+
+**Description**
+
+- Sets the delay value for detecting a long press on the buttons.
+- Logs an error message if the argument is invalid or not provided.
+- Logs a success message with the new delay value if the command executes correctly.
 
 ---
 

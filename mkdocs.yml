@@ -60,7 +60,9 @@ nav:
   - Terminal:
       - Text Mode: terminal/text_mode.md
       - Binary Mode: terminal/binary_mode.md
-  - Hardware: hardware.md
+  - Hardware:
+      - Board: hardware/board.md
+      - Buttons: hardware/buttons.md
   - Development:
       - Environment & Tools: development.md
       - Adding Features: adding_features.md
