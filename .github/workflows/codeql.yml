@@ -16,7 +16,7 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: 'ubuntu-latest'
-    container: dtrochow/3-key:v0.0.1
+    container: dtrochow/3-key:amd.v0.1.0
 
     permissions:
       # required for all workflows
