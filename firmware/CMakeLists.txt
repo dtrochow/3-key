@@ -7,6 +7,8 @@ set(src_dir ${CMAKE_CURRENT_LIST_DIR}/src)
 
 set(PICO_BOARD waveshare_rp2040_plus_16mb)
 
+set(PICO_USE_FASTEST_SUPPORTED_CLOCK 1)
+
 include(${cmake_files}/pico_sdk_import.cmake)
 
 project(${project_name} C CXX ASM)
