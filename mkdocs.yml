@@ -30,6 +30,8 @@ markdown_extensions:
   - attr_list
   - tables
   - plantuml_markdown
+  - admonition
+  - pymdownx.details
 plugins:
   - blog:
       enabled: true
