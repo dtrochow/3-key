@@ -19,3 +19,16 @@ python3 connect_serial.py
 It finds the RPi Pico serial device name and connects to it using `picocom` tool.
 
 All requirements are listed in `requirements.txt` file.
+
+## How to run documentation locally
+
+1. Run docker container with the `-d` parameter (documentation)
+```bash
+python3 run_docker.py -d
+```
+
+2. The documentation will be available on [http://127.0.0.1:8000](http://127.0.0.1:8000/) address in any browser
+
+## Support
+
+If you would like to contribute to the project or have any questions, please do not hesitate to create an issue or send an email to [dominik.trochowski@gmail.com](mailto:dominik.trochowski@gmail.com)
