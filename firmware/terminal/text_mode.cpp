@@ -194,14 +194,17 @@ bool TextMode::handle_time_command(const std::vector<std::string>& params) {
         return false;
     }
 
-    const std::string& type = params[0];
+    const std::string& param = params[0];
     std::string log;
-    if (type == "work") {
+    if (param == "work") {
         log = f_handler.get_feature_log(
             FeatureType::TIME_TRACKER, static_cast<uint>(TimeTrackerLog::CURRENT_WORK_TIME_REPORT));
-    } else if (type == "meetings") {
+    } else if (param == "meetings") {
         log = f_handler.get_feature_log(FeatureType::TIME_TRACKER,
             static_cast<uint>(TimeTrackerLog::CURRENT_MEETINGS_TIME_REPORT));
+    } else if (param == "session") {
+        log = f_handler.get_feature_log(
+            FeatureType::TIME_TRACKER, static_cast<uint>(TimeTrackerLog::CURRENT_SESSION_ID));
     } else {
         log = "Error: Unsupported argument";
     }

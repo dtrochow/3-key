@@ -36,6 +36,7 @@
 enum class TimeTrackerLog : uint {
     CURRENT_WORK_TIME_REPORT     = 0,
     CURRENT_MEETINGS_TIME_REPORT = 1,
+    CURRENT_SESSION_ID           = 2,
 };
 
 typedef struct {
