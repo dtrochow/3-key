@@ -182,6 +182,9 @@ std::string TimeTracker::get_log(uint log_id) const {
             log = time.get_current_date_and_time_string() + "Meetings: " + std::to_string(hours) +
                 "h " + std::to_string(minutes) + "min " + std::to_string(seconds) + "s";
         } break;
+        case TimeTrackerLog::CURRENT_SESSION_ID:
+            log = "Current session ID: " + std::to_string(data.current_entry);
+            break;
         default: log = "Invalid log ID";
     }
     return log;
