@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 def get_container_name():
     """Get the full container name."""
-    machine_arch = platform.machine()
+    machine_arch = platform.machine().lower()
     if "arm" in machine_arch:
         return f"{CONTAINER_REPOSITORY}/{CONTAINER_NAME}:arm.{CONTAINER_VERSION}"
     if "x86" in machine_arch or "i386" in machine_arch or "amd64" in machine_arch:
