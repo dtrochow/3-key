@@ -37,7 +37,7 @@ typedef struct {
 } KeyConfigTableEntry_t;
 
 constexpr uint MAX_KEYS_COUNT              = 10;
-constexpr uint LONG_PRESS_DELAY_MS_DEFAULT = 350;
+constexpr uint LONG_PRESS_DELAY_MS_DEFAULT = 800;
 
 enum class LedsMode {
     WHEN_BUTTON_PRESSED,
@@ -101,6 +101,7 @@ class KeysConfig {
     }
 
     LedsMode get_leds_mode() const { return leds_mode; }
+
     void switch_leds_mode(LedsMode mode) {
         leds_mode = mode;
         switch (leds_mode) {

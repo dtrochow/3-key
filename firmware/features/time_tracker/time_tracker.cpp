@@ -22,29 +22,72 @@
 #include <limits>
 
 #include "keys_config.hpp"
+#include "leds_config.hpp"
 #include "storage_config.hpp"
 #include "time.hpp"
 #include "time_tracker.hpp"
 
-void TimeTracker::init() {
-    const std::vector<KeyConfigTableEntry_t> keys = {
-        /* key_id key_value color */
-        { 0, Key::NONE, Color::Red },
-        { 1, Key::NONE, Color::Green },
-        { 2, Key::NONE, Color::Blue },
-    };
+repeating_timer_t* tracking_timer = nullptr;
 
-    for (const auto& entry : keys) {
-        keys_config.set_key_color(entry.key_id, entry.color);
-        keys_config.set_key_value(entry.key_id, entry.key);
+bool TimeTracker::timer_callback(repeating_timer_t* timer) {
+    auto* tracker = static_cast<TimeTracker*>(timer->user_data);
+    if (!tracker)
+        return false;
+
+    const uint64_t current_time_us = time_us_64();
+    constexpr uint64_t elapsed_time_us = (TRACING_TIMER_INTERVAL_MS * MICROSECONDS_IN_MILISECOND_COUNT);
+    auto& entry = tracker->data.tracking_entries[tracker->data.active_session];
+    if (entry.tracking_work) {
+        entry.work_time_us += elapsed_time_us;
+    } else if (entry.tracking_meetings) {
+        entry.meeting_time_us += elapsed_time_us;
     }
 
+    /* @TODO: Fix following scenario: when the medium or long threshold is reached the short press
+       in tracker shall be disabled to not run animation showing how many hours were tracked */
+    const uint64_t total_tracked_time_ms = get_milliseconds_tracked(entry);
+    if (total_tracked_time_ms >= MEDIUM_THRESHOLD_MS && !entry.medium_threshold_reached) {
+        tracker->led_enable(FUNCTION_KEY_ID, Color::Yellow);
+        entry.medium_threshold_reached = true;
+    } else if (total_tracked_time_ms >= LONG_THRESHOLD_MS && !entry.long_threshold_reached) {
+        tracker->led_enable(FUNCTION_KEY_ID, Color::Red);
+        entry.long_threshold_reached = true;
+    }
+
+    if (tracker->is_time_to_save()) {
+        tracker->save_tracking_data();
+        tracker->zero_intervals_count();
+    } else {
+        tracker->increment_intervals_count();
+    }
+
+    return true;
+}
+
+void TimeTracker::init() {
     storage.get_blob(BlobType::TIME_TRACKER_DATA, data);
     if (is_factory_required())
         factory_init();
 
+    disable_all_leds();
+    stop_tracking();
+
     keys_config.switch_leds_mode(LedsMode::HANDLED_BY_FEATURE);
     set_tracking_date();
+
+    tracking_timer = new repeating_timer_t;
+    add_repeating_timer_ms(TRACING_TIMER_INTERVAL_MS, TimeTracker::timer_callback, this, tracking_timer);
+}
+
+void TimeTracker::deinit() {
+    keys_config.switch_leds_mode(LedsMode::WHEN_BUTTON_PRESSED);
+    disable_all_leds();
+
+    if (tracking_timer) {
+        cancel_repeating_timer(tracking_timer);
+        delete tracking_timer;
+        tracking_timer = nullptr;
+    }
 }
 
 void TimeTracker::factory_init() {
@@ -59,94 +102,119 @@ void TimeTracker::factory_init() {
         entry.tracking_date     = {};
     }
 
-    data.current_entry = 0;
+    data.active_session = 0;
 
-    storage.save_blob(BlobType::TIME_TRACKER_DATA, data);
+    save_tracking_data();
 }
 
 bool TimeTracker::is_factory_required() const {
     return (data.magic != BLOB_MAGIC);
 }
 
+void TimeTracker::stop_tracking() {
+    auto& entry = data.tracking_entries[data.active_session];
+    if (entry.tracking_work) {
+        entry.tracking_work = false;
+        led_disable(WORK_TRACKING_KEY_ID);
+    } else if (entry.tracking_meetings) {
+        entry.tracking_meetings = false;
+        led_disable(MEETING_TRACKING_KEY_ID);
+    }
+}
+
 void TimeTracker::set_tracking_date() {
-    auto& entry = data.tracking_entries[data.current_entry];
+    auto& entry = data.tracking_entries[data.active_session];
     if (is_date_empty(entry.tracking_date))
         entry.tracking_date = time.get_current_date_and_time();
 }
 
-void TimeTracker::tracker(const uint key_id, const Buttons& buttons) {
-    const uint64_t current_time_us = time_us_64();
-    auto& entry                    = data.tracking_entries[data.current_entry];
-    auto& new_entry                = data.tracking_entries[data.current_entry];
+void TimeTracker::handle_key_0_press(auto& entry, const bool is_long_press) {
+    if (!is_long_press) {
+        if (entry.tracking_work) {
+            entry.tracking_work = false;
+            led_disable(WORK_TRACKING_KEY_ID);
+        } else {
+            if (entry.tracking_meetings) {
+                entry.tracking_meetings = false;
+                led_disable(MEETING_TRACKING_KEY_ID);
+            }
+            entry.tracking_work = true;
+            Color color         = get_key_color_info(WORK_TRACKING_KEY_ID)->color;
+            led_enable(WORK_TRACKING_KEY_ID, color);
+        }
+    }
+}
+
+void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
+    if (!is_long_press) {
+        if (entry.tracking_meetings) {
+            entry.tracking_meetings = false;
+            led_disable(MEETING_TRACKING_KEY_ID);
+        } else {
+            if (entry.tracking_work) {
+                entry.tracking_work = false;
+                led_disable(WORK_TRACKING_KEY_ID);
+            }
+            entry.tracking_meetings = true;
+            Color color             = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
+            led_enable(MEETING_TRACKING_KEY_ID, color);
+        }
+    }
+}
+
+void TimeTracker::handle_key_2_press(auto& entry, const bool is_long_press) {
+    Color color = get_key_color_info(FUNCTION_KEY_ID)->color;
+    if (is_long_press) {
+        stop_tracking();
+        led_disable(FUNCTION_KEY_ID);
+
+        move_to_next_session();
+        initialize_new_session();
+
+        next_session_animation(color);
+    } else {
+        /* Tracked hours indicator */
+        const uint hours = get_hours_tracked();
+        if (hours > 0) {
+            led_blink(FUNCTION_KEY_ID, 800, hours, color);
+        } else {
+            led_blink(FUNCTION_KEY_ID, 800, 1, color);
+        }
+    }
+}
+
+void TimeTracker::initialize_new_session() {
+    auto& entry                    = data.tracking_entries[data.active_session];
+    entry.start_time_us            = 0;
+    entry.work_time_us             = 0;
+    entry.meeting_time_us          = 0;
+    entry.tracking_work            = false;
+    entry.tracking_meetings        = false;
+    entry.tracking_date            = time.get_current_date_and_time();
+    entry.medium_threshold_reached = false;
+    entry.long_threshold_reached   = false;
+}
+
+void TimeTracker::move_to_next_session() {
+    if (data.active_session < (MAX_TIME_TRACKER_ENTRIES_COUNT - 1)) {
+        data.active_session++;
+    } else {
+        data.active_session = 0;
+    }
+}
+
+void TimeTracker::tracker(const uint key_id, const bool is_long_press, const Buttons& buttons) {
+    auto& entry = data.tracking_entries[data.active_session];
+
+    set_tracking_date();
 
     switch (key_id) {
-        case 0:
-            set_tracking_date();
-            if (entry.tracking_work) {
-                entry.work_time_us += (current_time_us - entry.start_time_us);
-                entry.start_time_us = 0;
-                entry.tracking_work = false;
-                keys_config.led_disable(0);
-            } else {
-                if (entry.tracking_meetings) {
-                    entry.meeting_time_us += (current_time_us - entry.start_time_us);
-                    entry.tracking_meetings = false;
-                    keys_config.led_disable(1);
-                }
-                entry.start_time_us = current_time_us;
-                entry.tracking_work = true;
-                keys_config.led_enable(0);
-            }
-            break;
-
-        case 1:
-            set_tracking_date();
-            if (entry.tracking_meetings) {
-                entry.meeting_time_us += (current_time_us - entry.start_time_us);
-                entry.start_time_us     = 0;
-                entry.tracking_meetings = false;
-                keys_config.led_disable(1);
-            } else {
-                if (entry.tracking_work) {
-                    entry.work_time_us += (current_time_us - entry.start_time_us);
-                    entry.tracking_work = false;
-                    keys_config.led_disable(0);
-                }
-                entry.start_time_us     = current_time_us;
-                entry.tracking_meetings = true;
-                keys_config.led_enable(1);
-            }
-            break;
-
-        case 2:
-            if (entry.tracking_work) {
-                entry.work_time_us += (current_time_us - entry.start_time_us);
-                entry.tracking_work = false;
-                keys_config.led_disable(0);
-            }
-            if (entry.tracking_meetings) {
-                entry.meeting_time_us += (current_time_us - entry.start_time_us);
-                entry.tracking_meetings = false;
-                keys_config.led_disable(1);
-            }
-
-            if (data.current_entry < MAX_TIME_TRACKER_ENTRIES_COUNT - 1) {
-                data.current_entry++;
-            } else {
-                data.current_entry = 0;
-            }
-
-            new_entry.start_time_us     = 0;
-            new_entry.work_time_us      = 0;
-            new_entry.meeting_time_us   = 0;
-            new_entry.tracking_work     = false;
-            new_entry.tracking_meetings = false;
-            break;
-
+        case WORK_TRACKING_KEY_ID: handle_key_0_press(entry, is_long_press); break;
+        case MEETING_TRACKING_KEY_ID: handle_key_1_press(entry, is_long_press); break;
+        case FUNCTION_KEY_ID: handle_key_2_press(entry, is_long_press); break;
         /* Unexpected key_id */
         default: return;
     }
-    storage.save_blob(BlobType::TIME_TRACKER_DATA, data);
 }
 
 void TimeTracker::handle(Buttons& buttons) {
@@ -154,15 +222,14 @@ void TimeTracker::handle(Buttons& buttons) {
     if (pressed_key.has_value()) {
         const ButtonState_t button_state = pressed_key.value();
         const uint key_id                = button_state.key_id;
-        if (!button_state.is_long_press) {
-            tracker(key_id, buttons);
-        }
+        const bool is_long_press         = button_state.is_long_press;
+        tracker(key_id, is_long_press, buttons);
     }
 }
 
 std::string TimeTracker::get_log(uint log_id) const {
     std::string log;
-    auto& entry = data.tracking_entries[data.current_entry];
+    auto& entry = data.tracking_entries[data.active_session];
     switch (static_cast<TimeTrackerLog>(log_id)) {
         case TimeTrackerLog::CURRENT_WORK_TIME_REPORT: {
             const uint64_t total_seconds = entry.work_time_us / MICROSECONDS_IN_SECOND_COUNT;
@@ -179,11 +246,11 @@ std::string TimeTracker::get_log(uint log_id) const {
             const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
             const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
 
-            log = time.get_current_date_and_time_string() + "Meetings: " + std::to_string(hours) +
+            log = time.get_current_date_and_time_string() + " Meetings: " + std::to_string(hours) +
                 "h " + std::to_string(minutes) + "min " + std::to_string(seconds) + "s";
         } break;
         case TimeTrackerLog::CURRENT_SESSION_ID:
-            log = "Current session ID: " + std::to_string(data.current_entry);
+            log = "Current session ID: " + std::to_string(data.active_session);
             break;
         default: log = "Invalid log ID";
     }

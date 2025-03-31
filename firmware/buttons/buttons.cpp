@@ -147,7 +147,8 @@ void gpio_callback(uint gpio, uint32_t events) {
             state.is_debouncing = true;
 
             repeating_timer_t* debounce_timer = new repeating_timer_t;
-            add_repeating_timer_ms(DEBOUNCE_DELAY_MS, debounce_timer_callback, (void*)gpio, debounce_timer);
+            add_repeating_timer_ms(DEBOUNCE_DELAY_MS, debounce_timer_callback,
+                reinterpret_cast<void*>(gpio), debounce_timer);
 
             gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, false);
         }
@@ -163,8 +164,8 @@ static bool debounce_timer_callback(repeating_timer_t* timer) {
     if (!gpio_get(gpio)) {
         state.long_press_timer      = new repeating_timer_t;
         state.long_press_start_time = to_ms_since_boot(get_absolute_time());
-        add_repeating_timer_ms(LONG_PRESS_CHECK_DELAY_MS, long_press_timer_callback, (void*)gpio,
-            state.long_press_timer);
+        add_repeating_timer_ms(LONG_PRESS_CHECK_DELAY_MS, long_press_timer_callback,
+            reinterpret_cast<void*>(gpio), state.long_press_timer);
     } else {
         state.is_pending_handle = true;
         state.is_debouncing     = false;
