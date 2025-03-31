@@ -50,6 +50,9 @@ The `TimeTracker` helps track work and meeting times using three buttons with vi
         - Switches to the next tracking slot/context.
         - Lights up all LEDs sequentially in green (LED 1 -> 1s -> LED 2 -> 1s -> LED 3).
 
+!!! note "Session Management - Number of tracked hours"
+    It will blink once until the second hour has passed.
+
 ## TimeTracker State Diagram: Work and Meeting Tracking
 
 ```plantuml

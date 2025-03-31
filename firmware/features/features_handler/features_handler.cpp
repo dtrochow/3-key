@@ -61,9 +61,17 @@ bool FeaturesHandler::is_factory_required() const {
 void FeaturesHandler::switch_to_feature(FeatureType type) {
     FeaturesHandlerConfig_t conifg_cpy = config;
 
+    if (config.is_feature_set) {
+        auto it = features.find(config.current_feature);
+        if (it != features.end()) {
+            it->second->deinit();
+        }
+    }
+
     config.is_feature_set  = (type == FeatureType::NONE) ? false : true;
     config.current_feature = type;
 
+    /* Feature not found */
     if ((features.find(type) == features.end()) && (type != FeatureType::NONE)) {
         config = conifg_cpy;
         return;

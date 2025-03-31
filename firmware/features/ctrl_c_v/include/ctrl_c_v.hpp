@@ -35,5 +35,6 @@ class CtrlCVFeature : public Feature {
 
     void send_keys(const uint8_t key, const Buttons& buttons);
     void init();
+    void deinit() {};
     std::string get_log(uint log_id) const;
 };

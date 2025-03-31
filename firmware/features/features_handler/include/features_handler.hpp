@@ -50,6 +50,7 @@ class Feature {
     // Called on each HID task loop
     virtual void handle(Buttons& buttons)          = 0;
     virtual void init()                            = 0;
+    virtual void deinit()                          = 0;
     virtual std::string get_log(uint log_id) const = 0;
 
   protected:
