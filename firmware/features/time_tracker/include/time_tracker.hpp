@@ -122,6 +122,11 @@ class TimeTracker : public Feature {
     void increment_intervals_count() { intervals_count++; }
     void zero_intervals_count() { intervals_count = 0; }
 
+    bool is_any_threshold_reached() const {
+        const auto& entry = data.tracking_entries[data.active_session];
+        return (entry.long_threshold_reached || entry.medium_threshold_reached);
+    }
+
     static uint64_t get_milliseconds_tracked(const TimeTrackingEntry_t& entry) {
         const uint64_t total_ms_work    = entry.work_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
         const uint64_t total_ms_meeting = entry.meeting_time_us / MICROSECONDS_IN_MILISECOND_COUNT;

@@ -43,8 +43,6 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
         entry.meeting_time_us += elapsed_time_us;
     }
 
-    /* @TODO: Fix following scenario: when the medium or long threshold is reached the short press
-       in tracker shall be disabled to not run animation showing how many hours were tracked */
     const uint64_t total_tracked_time_ms = get_milliseconds_tracked(entry);
     if (total_tracked_time_ms >= MEDIUM_THRESHOLD_MS && !entry.medium_threshold_reached) {
         tracker->led_enable(FUNCTION_KEY_ID, Color::Yellow);
@@ -94,12 +92,14 @@ void TimeTracker::factory_init() {
     data.magic = BLOB_MAGIC;
 
     for (auto& entry : data.tracking_entries) {
-        entry.start_time_us     = 0;
-        entry.work_time_us      = 0;
-        entry.meeting_time_us   = 0;
-        entry.tracking_work     = false;
-        entry.tracking_meetings = false;
-        entry.tracking_date     = {};
+        entry.start_time_us            = 0;
+        entry.work_time_us             = 0;
+        entry.meeting_time_us          = 0;
+        entry.tracking_work            = false;
+        entry.tracking_meetings        = false;
+        entry.tracking_date            = {};
+        entry.medium_threshold_reached = false;
+        entry.long_threshold_reached   = false;
     }
 
     data.active_session = 0;
@@ -173,12 +173,14 @@ void TimeTracker::handle_key_2_press(auto& entry, const bool is_long_press) {
 
         next_session_animation(color);
     } else {
-        /* Tracked hours indicator */
-        const uint hours = get_hours_tracked();
-        if (hours > 0) {
-            led_blink(FUNCTION_KEY_ID, 800, hours, color);
-        } else {
-            led_blink(FUNCTION_KEY_ID, 800, 1, color);
+        if (!is_any_threshold_reached()) {
+            /* Tracked hours indicator */
+            const uint hours = get_hours_tracked();
+            if (hours > 0) {
+                led_blink(FUNCTION_KEY_ID, 800, hours, color);
+            } else {
+                led_blink(FUNCTION_KEY_ID, 800, 1, color);
+            }
         }
     }
 }
