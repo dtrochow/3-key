@@ -50,6 +50,7 @@ uint64_t Time::get_current_time_ms() const {
 uint64_t Time::get_current_time_s() const {
     return current_time_us / 1000000;
 }
+
 DateTime_t Time::get_current_date_and_time() const {
     constexpr uint16_t EPOCH_YEAR             = 1970;
     constexpr uint32_t SECONDS_IN_MINUTE      = 60;
@@ -90,14 +91,14 @@ DateTime_t Time::get_current_date_and_time() const {
         }
     }
 
-    const auto day = static_cast<uint8_t>(total_seconds / (SECONDS_IN_DAY + 1));
+    const auto day = static_cast<uint8_t>(total_seconds / SECONDS_IN_DAY) + 1;
     total_seconds %= SECONDS_IN_DAY;
     const auto hour = static_cast<uint8_t>(total_seconds / SECONDS_IN_HOUR);
     total_seconds %= SECONDS_IN_HOUR;
     const auto minute = static_cast<uint8_t>(total_seconds / SECONDS_IN_MINUTE);
     const auto second = static_cast<uint8_t>(total_seconds % SECONDS_IN_MINUTE);
 
-    return { year, static_cast<uint8_t>(month), day, hour, minute, second };
+    return { year, static_cast<uint8_t>(month), static_cast<uint8_t>(day), hour, minute, second };
 }
 
 std::string Time::get_current_date_and_time_string() const {
