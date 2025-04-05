@@ -30,6 +30,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Print the compiler being used
+message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
+
 pico_sdk_init()
 
 add_executable(${project_name}
@@ -40,6 +44,32 @@ target_include_directories(${project_name} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
+# Define local libraries compile flags
+set(LIBRARY_COMPILE_FLAGS
+    "\
+    -Werror\
+    -Wall\
+    -Wextra\
+    -Wextra\
+    -Wduplicated-cond\
+    -Wnull-dereference\
+    -Wduplicated-branches\
+    -Wsign-conversion\
+    -Wconversion\
+    -Wshadow\
+    -Wformat=2\
+    -Wformat-extra-args\
+    -Wpedantic\
+    -Wfloat-equal\
+    -Wunused\
+    -Wuninitialized\
+    -Wswitch-default\
+    -Wswitch-enum\
+    -Wcast-align\
+    "
+)
+
+# Pass the variable to subdirectories
 add_subdirectory(buttons)
 add_subdirectory(leds)
 add_subdirectory(usb)
@@ -49,13 +79,13 @@ add_subdirectory(keyscfg)
 add_subdirectory(features)
 add_subdirectory(time)
 
-target_link_libraries(${project_name} 
-    pico_stdlib 
+target_link_libraries(${project_name} PRIVATE
+    pico_stdlib
     pico_multicore
     buttons
     leds
     usb
-    storage 
+    storage
     terminal
     keyscfg
     features_handler
