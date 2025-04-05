@@ -161,6 +161,23 @@ The script will print the following things:
 
 ---
 
+## Driver
+
+The driver for 3-key device has only a single purpose for now. Sending the current time to the device from host when the device is being connected to host.
+
+### Operating systems
+
+| OS        | Support |
+|-----------|---------|
+| Linux     | ❌      |
+| Windows   | ❌      |
+| macOS     | ✔️      |
+
+### Installation
+
+There is an install.py script in each drivers folder, which performs the installation of the driver from the latest driver release.
+You can also choose to build and install the driver yourself by providing the path to the built driver using the -d parameter.
+
 ## Additional Notes
 
 - **Session Limit**: The `TimeTracker` supports up to a predefined maximum number of sessions. Once the limit is reached, it cycles back to the first session.
