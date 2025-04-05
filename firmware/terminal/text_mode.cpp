@@ -214,6 +214,8 @@ bool TextMode::handle_time_command(const std::vector<std::string>& params) {
         log = "Error: Unsupported argument";
     }
 
+    // Add set session ID command
+
     add_log(log);
     return true;
 }
