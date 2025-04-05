@@ -113,10 +113,7 @@ bool TextMode::dispatch_command(Command command, const std::vector<std::string>&
         case Command::LONG_PRESS_MS: {
             return handle_long_press_ms_command(params);
         }
-        case Command::UNKNOWN: {
-            add_log("Unknown command");
-            return false;
-        }
+        case Command::UNKNOWN:
         default: return false;
     }
 }
