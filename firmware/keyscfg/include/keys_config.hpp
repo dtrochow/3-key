@@ -53,8 +53,8 @@ typedef struct {
 
 class KeysConfig {
   public:
-    KeysConfig(std::vector<ButtonConfig> keys_default, Storage& storage)
-    : storage(storage), leds_mode(LedsMode::WHEN_BUTTON_PRESSED) {
+    KeysConfig(std::vector<ButtonConfig> keys_default, Storage& storage_)
+    : storage(storage_), leds_mode(LedsMode::WHEN_BUTTON_PRESSED) {
         init(keys_default);
     }
     ~KeysConfig() = default;
@@ -117,6 +117,7 @@ class KeysConfig {
                 }
                 break;
             }
+            case LedsMode::NONE:
             default: break;
         }
     }

@@ -26,8 +26,8 @@
 #include "time.hpp"
 #include "time_tracker.hpp"
 
-FeaturesHandler::FeaturesHandler(Storage& storage, KeysConfig& keys_config, Time& time)
-: storage(storage), keys_config(keys_config), time(time) {}
+FeaturesHandler::FeaturesHandler(Storage& storage_, KeysConfig& keys_config_, Time& time_)
+: storage(storage_), keys_config(keys_config_), time(time_) {}
 
 void FeaturesHandler::init() {
     (void)storage.get_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
@@ -115,6 +115,7 @@ std::string FeaturesHandler::get_current_feature_name() const {
         case FeatureType::CTRL_C_V: return "ctrl_c_v";
         case FeatureType::TIME_TRACKER: return "time-tracker";
         case FeatureType::NONE: return "none";
+        default: break;
     }
     return "unknown";
 }

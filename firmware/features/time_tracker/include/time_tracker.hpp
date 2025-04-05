@@ -76,8 +76,8 @@ typedef struct {
 
 class TimeTracker : public Feature {
   public:
-    explicit TimeTracker(KeysConfig& keys_config, Storage& storage, Time& time)
-    : Feature(keys_config), storage(storage), time(time) {
+    explicit TimeTracker(KeysConfig& keys_config_, Storage& storage_, Time& time_)
+    : Feature(keys_config_), storage(storage_), time(time_) {
         initialize_key_color_map();
     }
     void handle(Buttons& buttons);
@@ -106,7 +106,7 @@ class TimeTracker : public Feature {
     }
 
     void set_tracking_date();
-    void tracker(const uint key, const bool is_long_press, const Buttons& buttons);
+    void tracker(const uint key, const bool is_long_press);
     void init();
     void deinit();
     std::string get_log(uint log_id) const;
@@ -137,13 +137,14 @@ class TimeTracker : public Feature {
             data.tracking_entries[data.active_session].work_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
         const uint64_t total_ms_meeting =
             data.tracking_entries[data.active_session].meeting_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
-        return ((total_ms_work + total_ms_meeting) / (MILLISECONDS_IN_SECOND_COUNT * SECONDS_IN_HOUR_COUNT));
+        return static_cast<uint>(
+            (total_ms_work + total_ms_meeting) / (MILLISECONDS_IN_SECOND_COUNT * SECONDS_IN_HOUR_COUNT));
     }
 
     /* Key handling helpers */
     void handle_key_0_press(auto& entry, const bool is_long_press);
     void handle_key_1_press(auto& entry, const bool is_long_press);
-    void handle_key_2_press(auto& entry, const bool is_long_press);
+    void handle_key_2_press(const bool is_long_press);
 
     /* Leds handling helpers */
     void set_color(uint key_id, Color color) { keys_config.set_key_color(key_id, color); };

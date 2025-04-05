@@ -50,9 +50,9 @@ void leds_task_on_core1() {
 
 int main(void) {
     const std::vector<ButtonConfig> key_configs = {
-        { 0, BUTTON_RIGHT_GPIO, Key::V, Color::Red },
-        { 1, BUTTON_MIDDLE_GPIO, Key::C, Color::Green },
-        { 2, BUTTON_LEFT_GPIO, Modifier::LEFT_CMD, Color::Blue },
+        { 0, BUTTON_RIGHT_GPIO, Key::V, Color::Red, true },
+        { 1, BUTTON_MIDDLE_GPIO, Key::C, Color::Green, true },
+        { 2, BUTTON_LEFT_GPIO, Modifier::LEFT_CMD, Color::Blue, true },
     };
 
     mutex_init(&g_mutex);

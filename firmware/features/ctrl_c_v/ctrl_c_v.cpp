@@ -64,5 +64,6 @@ void CtrlCVFeature::handle(Buttons& buttons) {
 }
 
 std::string CtrlCVFeature::get_log(uint log_id) const {
+    (void)log_id;
     return "";
 }

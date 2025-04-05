@@ -34,7 +34,6 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     if (!tracker)
         return false;
 
-    const uint64_t current_time_us = time_us_64();
     constexpr uint64_t elapsed_time_us = (TRACING_TIMER_INTERVAL_MS * MICROSECONDS_IN_MILISECOND_COUNT);
     auto& entry = tracker->data.tracking_entries[tracker->data.active_session];
     if (entry.tracking_work) {
@@ -162,7 +161,7 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
     }
 }
 
-void TimeTracker::handle_key_2_press(auto& entry, const bool is_long_press) {
+void TimeTracker::handle_key_2_press(const bool is_long_press) {
     Color color = get_key_color_info(FUNCTION_KEY_ID)->color;
     if (is_long_press) {
         stop_tracking();
@@ -205,7 +204,7 @@ void TimeTracker::move_to_next_session() {
     }
 }
 
-void TimeTracker::tracker(const uint key_id, const bool is_long_press, const Buttons& buttons) {
+void TimeTracker::tracker(const uint key_id, const bool is_long_press) {
     auto& entry = data.tracking_entries[data.active_session];
 
     set_tracking_date();
@@ -213,7 +212,7 @@ void TimeTracker::tracker(const uint key_id, const bool is_long_press, const But
     switch (key_id) {
         case WORK_TRACKING_KEY_ID: handle_key_0_press(entry, is_long_press); break;
         case MEETING_TRACKING_KEY_ID: handle_key_1_press(entry, is_long_press); break;
-        case FUNCTION_KEY_ID: handle_key_2_press(entry, is_long_press); break;
+        case FUNCTION_KEY_ID: handle_key_2_press(is_long_press); break;
         /* Unexpected key_id */
         default: return;
     }
@@ -225,7 +224,7 @@ void TimeTracker::handle(Buttons& buttons) {
         const ButtonState_t button_state = pressed_key.value();
         const uint key_id                = button_state.key_id;
         const bool is_long_press         = button_state.is_long_press;
-        tracker(key_id, is_long_press, buttons);
+        tracker(key_id, is_long_press);
     }
 }
 

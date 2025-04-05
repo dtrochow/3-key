@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <cstring>
 
-BinaryMode::BinaryMode(Time& time) : binary_mode(false), time(time) {}
+BinaryMode::BinaryMode(Time& time_) : time(time_), binary_mode(false) {}
 
 std::span<uint8_t> BinaryMode::handle(uint8_t ch) {
     binary_buffer.push_back(ch);
@@ -84,8 +84,8 @@ std::span<uint8_t> BinaryMode::handle_binary_packet(const std::vector<uint8_t>& 
     /* Extract payload and CRC32 */
     const std::vector<uint8_t> payload(packet.begin() + BINARY_MODE_HEADER_SIZE_BYTES,
         packet.end() - BINARY_MODE_CRC_32_SIZE_BYTES);
-    const uint32_t received_crc =
-        *reinterpret_cast<const uint32_t*>(&packet[packet.size() - BINARY_MODE_CRC_32_SIZE_BYTES]);
+    uint32_t received_crc;
+    std::memcpy(&received_crc, &packet[packet.size() - BINARY_MODE_CRC_32_SIZE_BYTES], sizeof(received_crc));
 
     /* Validate CRC32 */
     const uint32_t calculated_crc =
@@ -98,7 +98,7 @@ std::span<uint8_t> BinaryMode::handle_binary_packet(const std::vector<uint8_t>& 
         case BinaryCommandID::SYNC_TIME:
             response = handle_sync_time_command(payload, command_type);
             break;
-
+        case BinaryCommandID::UNKNOWN:
         default: break;
     }
 

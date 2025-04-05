@@ -19,12 +19,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "cdc.hpp"
+#pragma GCC diagnostic pop
 #include "terminal.hpp"
 
 void CdcDevice::task() const {
     while (tud_cdc_available()) {
-        const char c = tud_cdc_read_char();
+        const char c = static_cast<char>(tud_cdc_read_char());
 
         const std::span<uint8_t> buffer_span = t.terminal(c);
 

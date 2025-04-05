@@ -23,7 +23,11 @@
 
 #include <variant>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "class/hid/hid.h"
+#pragma GCC diagnostic pop
+
 #include "leds_config.hpp"
 #include "pico/stdlib.h"
 
