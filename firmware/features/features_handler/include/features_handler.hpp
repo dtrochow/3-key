@@ -51,6 +51,7 @@ class Feature {
     virtual void handle(Buttons& buttons)          = 0;
     virtual void init()                            = 0;
     virtual void deinit()                          = 0;
+    virtual void factory_init()                    = 0;
     virtual std::string get_log(uint log_id) const = 0;
 
   protected:
@@ -64,6 +65,7 @@ class FeaturesHandler {
 
     void init();
     void factory_init();
+    void factory_init_features();
     void switch_to_feature(FeatureType type);
     void handle(Buttons& buttons);
     std::string get_feature_log(FeatureType f_type, uint log_id) const;

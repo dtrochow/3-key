@@ -54,6 +54,13 @@ void FeaturesHandler::factory_init() {
     (void)storage.save_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
 }
 
+void FeaturesHandler::factory_init_features() {
+    for (auto& feature : features) {
+        feature.second->deinit();
+        feature.second->factory_init();
+    }
+}
+
 bool FeaturesHandler::is_factory_required() const {
     return (config.magic != BLOB_MAGIC);
 }
