@@ -38,6 +38,7 @@ enum class Command {
     FEATURE,
     TIME,
     LONG_PRESS_MS,
+    FACTORY_INIT,
     UNKNOWN,
 };
 
@@ -72,6 +73,7 @@ class TextMode {
     std::map<std::string, Command> command_map = {
         { "reset", Command::RESET },
         { "erase", Command::ERASE },
+        { "factory_init", Command::FACTORY_INIT },
         { "color", Command::CHANGE_COLOR },
         { "feature", Command::FEATURE },
         { "time", Command::TIME },

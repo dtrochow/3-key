@@ -97,6 +97,10 @@ bool TextMode::dispatch_command(Command command, const std::vector<std::string>&
             add_log("Flash storage erased");
             return true;
         }
+        case Command::FACTORY_INIT: {
+            f_handler.factory_init_features();
+            return true;
+        }
         case Command::CHANGE_COLOR: {
             return handle_change_color_command(params);
         }
