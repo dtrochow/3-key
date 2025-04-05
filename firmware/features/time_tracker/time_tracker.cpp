@@ -158,6 +158,10 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
             Color color             = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
             led_enable(MEETING_TRACKING_KEY_ID, color);
         }
+    } else {
+        // Show current session ID by blinking the LED 0 & 1
+        // LED 0 - tens part
+        // LED 1 - ones part
     }
 }
 

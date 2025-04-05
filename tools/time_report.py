@@ -88,6 +88,19 @@ def sync_time(serial_port):
 def main():
     pico_serial_port = find_pico_device()
 
+    '''
+    Commands
+    1. Sync time - sync host time to 3-key
+    2. Get time report - default current session, but parameter for sessions ID can be given
+         - return time report for the session ID
+            - summary working time
+            - work time
+            - meetings time
+         - if no session ID is given, return current session time report
+    3. Get current session ID - return current session ID
+    4. New session - return new session ID
+    '''
+
     sync_time(pico_serial_port)
 
 
