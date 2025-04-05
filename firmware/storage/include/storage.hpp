@@ -42,7 +42,7 @@ using BlobBuff_t = std::array<uint8_t, BLOB_SLOT_SIZE_BYTES>;
 
 class Storage {
   public:
-    Storage(mutex_t& mutex);
+    Storage(mutex_t& mutex_);
     ~Storage() = default;
     StorageStatus init();
     StorageStatus factory_init();

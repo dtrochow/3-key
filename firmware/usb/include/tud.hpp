@@ -21,6 +21,9 @@
 
 #pragma once
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "bsp/board_api.h"
+#pragma GCC diagnostic pop
 
 void initialize_tud();

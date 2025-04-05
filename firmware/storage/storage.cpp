@@ -26,7 +26,7 @@
 #include "storage.hpp"
 #include "storage_config.hpp"
 
-Storage::Storage(mutex_t& mutex) : mutex(mutex) {
+Storage::Storage(mutex_t& mutex_) : mutex(mutex_) {
     sector.resize(blobs_per_sector);
     max_blob_id        = (STORAGE_SIZE / BLOB_SLOT_SIZE_BYTES) - 1;
     storage_start_addr = (const uint8_t*)(XIP_BASE + STORAGE_FLASH_OFFSET);
@@ -124,7 +124,7 @@ uint Storage::get_sector_id(BlobType blob_type) const {
 
 StorageStatus Storage::read_sector(uint sector_id) {
     const uint start_blob_id = sector_id * blobs_per_sector;
-    for (int i = 0; i < blobs_per_sector; i++) {
+    for (uint i = 0; i < blobs_per_sector; i++) {
         StorageStatus status = _get_blob(start_blob_id + i, sector[i]);
         if (status != StorageStatus::SUCCESS) {
             return status;

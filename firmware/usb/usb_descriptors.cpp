@@ -24,7 +24,10 @@
  */
 
 #include "usb_descriptors.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "bsp/board_api.h"
+#pragma GCC diagnostic pop
 #include "tusb.h"
 
 #define USB_PID 0x000A
@@ -171,12 +174,13 @@ enum {
     STRID_SERIAL,
 };
 
-// array of pointer to string descriptors
-char const* string_desc_arr[] = {
-    (const char[]){ 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-    "3-key",                      // 1: Manufacturer
-    "TinyUSB Device",             // 2: Product
-    NULL,                         // 3: Serials will use unique ID if possible
+// Replace compound literal with a static array to comply with ISO C++
+static const char langid_desc[2] = { 0x09, 0x04 };
+char const* string_desc_arr[]    = {
+    langid_desc,      // 0: Supported language is English (0x0409)
+    "3-key",          // 1: Manufacturer
+    "TinyUSB Device", // 2: Product
+    NULL,             // 3: Serials will use unique ID if possible
 };
 
 static uint16_t _desc_str[32 + 1];

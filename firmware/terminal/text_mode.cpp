@@ -25,8 +25,8 @@
 #include "time_tracker.hpp"
 #include <sstream>
 
-TextMode::TextMode(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler)
-: storage(storage), keys(keys), f_handler(f_handler) {
+TextMode::TextMode(Storage& storage_, KeysConfig& keys_, FeaturesHandler& f_handler_)
+: storage(storage_), keys(keys_), f_handler(f_handler_) {
     text_buffer = start_string;
 }
 
@@ -112,6 +112,10 @@ bool TextMode::dispatch_command(Command command, const std::vector<std::string>&
         }
         case Command::LONG_PRESS_MS: {
             return handle_long_press_ms_command(params);
+        }
+        case Command::UNKNOWN: {
+            add_log("Unknown command");
+            return false;
         }
         default: return false;
     }

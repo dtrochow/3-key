@@ -90,12 +90,12 @@ DateTime_t Time::get_current_date_and_time() const {
         }
     }
 
-    const uint8_t day = total_seconds / SECONDS_IN_DAY + 1;
+    const auto day = static_cast<uint8_t>(total_seconds / (SECONDS_IN_DAY + 1));
     total_seconds %= SECONDS_IN_DAY;
-    const uint8_t hour = total_seconds / SECONDS_IN_HOUR;
+    const auto hour = static_cast<uint8_t>(total_seconds / SECONDS_IN_HOUR);
     total_seconds %= SECONDS_IN_HOUR;
-    const uint8_t minute = total_seconds / SECONDS_IN_MINUTE;
-    const uint8_t second = total_seconds % SECONDS_IN_MINUTE;
+    const auto minute = static_cast<uint8_t>(total_seconds / SECONDS_IN_MINUTE);
+    const auto second = static_cast<uint8_t>(total_seconds % SECONDS_IN_MINUTE);
 
     return { year, static_cast<uint8_t>(month), day, hour, minute, second };
 }

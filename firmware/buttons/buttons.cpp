@@ -34,7 +34,7 @@ std::map<uint, ButtonState_t> button_map;
 
 static KeysConfig* keys_gp = nullptr;
 
-Buttons::Buttons(KeysConfig& keys) : keys(keys) {
+Buttons::Buttons(KeysConfig& keys_) : keys(keys_) {
     keys_gp = &keys;
 }
 
@@ -108,7 +108,13 @@ void Buttons::setup_button(uint gpio, uint key_id) {
     gpio_set_dir(gpio, GPIO_IN);
     gpio_pull_up(gpio);
 
-    button_map[key_id] = { .is_debouncing = false, .is_pending_handle = false, .gpio = gpio, .key_id = key_id };
+    button_map[key_id] = { .is_debouncing = false,
+        .is_pending_handle                = false,
+        .gpio                             = gpio,
+        .key_id                           = key_id,
+        .is_long_press                    = false,
+        .long_press_timer                 = nullptr,
+        .long_press_start_time            = 0 };
 }
 
 std::optional<ButtonState_t> Buttons::get_pending_button() {

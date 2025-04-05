@@ -44,7 +44,7 @@ typedef struct {
 
 class Feature {
   public:
-    explicit Feature(KeysConfig& keys_config) : keys_config(keys_config) {}
+    explicit Feature(KeysConfig& keys_config_) : keys_config(keys_config_) {}
     virtual ~Feature() = default;
 
     // Called on each HID task loop

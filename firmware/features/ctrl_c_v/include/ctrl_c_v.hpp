@@ -26,8 +26,8 @@
 
 class CtrlCVFeature : public Feature {
   public:
-    explicit CtrlCVFeature(KeysConfig& keys_config)
-    : Feature(keys_config), has_keyboard_key(false) {}
+    explicit CtrlCVFeature(KeysConfig& keys_config_)
+    : Feature(keys_config_), has_keyboard_key(false) {}
     void handle(Buttons& buttons);
 
   private:

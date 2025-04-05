@@ -19,7 +19,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include "bsp/board_api.h"
+#pragma GCC diagnostic pop
 
 #include "buttons.hpp"
 #include "buttons_config.hpp"
