@@ -109,6 +109,31 @@ def load_firmware():
         raise
 
 
+def run_build_and_run_unit_tests():
+    """Build and run unit tests."""
+    test_dir = get_absolute_path("tests")
+    build_dir = os.path.join(test_dir, "build")
+
+    # Clean the build directory if it exists
+    if os.path.exists(build_dir):
+        logging.info(f"Removing existing test build directory: {build_dir}")
+        shutil.rmtree(build_dir)
+
+    os.makedirs(build_dir, exist_ok=True)
+
+    try:
+        logging.info("Running cmake for unit tests...")
+        subprocess.run(["cmake", ".."], cwd=build_dir, check=True)
+        logging.info("Building unit tests...")
+        subprocess.run(["make", "-j8"], cwd=build_dir, check=True)
+        logging.info("Running unit tests...")
+        subprocess.run(["ctest", "--output-on-failure"], cwd=build_dir, check=True)
+        logging.info("Unit tests completed successfully.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Unit test process failed: {e}")
+        raise
+
+
 def main():
     configure_logging()
 
@@ -118,16 +143,22 @@ def main():
     parser.add_argument("-l", "--load", action="store_true", help="Load firmware to the device.")
     parser.add_argument("-c", "--clean", action="store_true", help="Clean build before building firmware.")
     parser.add_argument("-t", "--type", choices=["Debug", "Release"], default="Release", help="Build type (Debug or Release). Default is Release.")
+    parser.add_argument("-u", "--unittest", action="store_true", help="Build and run unit tests")
     args = parser.parse_args()
 
     try:
-        logging.info("Starting firmware build process.")
-        build_firmware(args.clean, args.type)
+        if not args.unittest:
+            logging.info("Building firmware.")
+            build_firmware(args.clean, args.type)
 
-        if args.load:
+        if not args.unittest and args.load:
             logging.info("Entering boot mode to load firmware.")
             enter_boot_mode()
             load_firmware()
+
+        if args.unittest:
+            logging.info("Building and running unit tests.")
+            run_build_and_run_unit_tests()
 
     except Exception as e:
         logging.error(f"Script execution failed: {e}")
