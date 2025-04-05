@@ -25,8 +25,13 @@ else()
     message(STATUS "Environment variable BUILD_TYPE is not set. Defaulting to Debug.")
 endif()
 
-set(CMAKE_C_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(STATUS "Debug build type selected.")
+    set(OPTIMIZATION_FLAG "-g -O0")
+elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Release build type selected.")
+    set(OPTIMIZATION_FLAG "-O3")
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -78,6 +83,8 @@ add_subdirectory(terminal)
 add_subdirectory(keyscfg)
 add_subdirectory(features)
 add_subdirectory(time)
+
+add_compile_options(${project_name} PUBLIC ${OPTIMIZATION_FLAGS})
 
 target_link_libraries(${project_name} PRIVATE
     pico_stdlib

@@ -25,7 +25,12 @@ def clean_build_directory(build_dir):
         shutil.rmtree(build_dir)
 
 
-def build_firmware(clean):
+def build_firmware(clean, build_type):
+    """Build the firmware using CMake and Make."""
+    # Set the build type for CMake
+    os.environ["BUILD_TYPE"] = build_type
+    logging.info(f"Build type set to: {build_type}")
+
     # Set the build directory to be directly in the project root (using `build/`)
     build_dir = get_absolute_path("build")
 
@@ -112,11 +117,12 @@ def main():
     parser = argparse.ArgumentParser(description="Firmware build and load script for Raspberry Pi Pico.")
     parser.add_argument("-l", "--load", action="store_true", help="Load firmware to the device.")
     parser.add_argument("-c", "--clean", action="store_true", help="Clean build before building firmware.")
+    parser.add_argument("-t", "--type", choices=["Debug", "Release"], default="Release", help="Build type (Debug or Release). Default is Release.")
     args = parser.parse_args()
 
     try:
         logging.info("Starting firmware build process.")
-        build_firmware(args.clean)
+        build_firmware(args.clean, args.type)
 
         if args.load:
             logging.info("Entering boot mode to load firmware.")
