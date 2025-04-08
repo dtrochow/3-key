@@ -119,3 +119,19 @@ std::string FeaturesHandler::get_current_feature_name() const {
     }
     return "unknown";
 }
+
+FeatureCmdResult FeaturesHandler::get_cmd(FeatureType f_type, const FeatureCommand& command) const {
+    const auto it = features.find(f_type);
+    if (it != features.end()) {
+        return it->second->get_cmd(command);
+    }
+    return { FeatureCmdStatus::INVALID_COMMAND, std::monostate{} };
+}
+
+FeatureCmdStatus FeaturesHandler::set_cmd(FeatureType f_type, const FeatureCommand& command) const {
+    const auto it = features.find(f_type);
+    if (it != features.end()) {
+        return it->second->set_cmd(command);
+    }
+    return FeatureCmdStatus::INVALID_COMMAND;
+}

@@ -23,7 +23,7 @@
 #include "binary_mode.hpp"
 
 Terminal::Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler, Time& time)
-: text_mode(storage, keys, f_handler), binary_mode(time) {}
+: text_mode(storage, keys, f_handler), binary_mode(time, f_handler) {}
 
 std::span<uint8_t> Terminal::terminal(char byte) {
     binary_mode.check_binary_mode(static_cast<uint8_t>(byte));

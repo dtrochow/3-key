@@ -43,3 +43,5 @@ site
 build
 
 __pycache__
+
+*.log

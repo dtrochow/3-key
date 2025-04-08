@@ -22,6 +22,7 @@
 #pragma once
 
 #include "buttons.hpp"
+#include "features_handler_types.hpp"
 #include "keys_config.hpp"
 #include "storage.hpp"
 #include "time.hpp"
@@ -30,29 +31,27 @@
 #include <string>
 #include <unordered_map>
 
-enum class FeatureType {
-    CTRL_C_V,
-    TIME_TRACKER,
-    NONE,
-};
-
-typedef struct {
-    uint32_t magic;
-    FeatureType current_feature;
-    bool is_feature_set;
-} FeaturesHandlerConfig_t;
 
 class Feature {
   public:
     explicit Feature(KeysConfig& keys_config_) : keys_config(keys_config_) {}
     virtual ~Feature() = default;
 
-    // Called on each HID task loop
     virtual void handle(Buttons& buttons)          = 0;
     virtual void init()                            = 0;
     virtual void deinit()                          = 0;
     virtual void factory_init()                    = 0;
     virtual std::string get_log(uint log_id) const = 0;
+
+    virtual FeatureCmdResult get_cmd(const FeatureCommand& command) const {
+        (void)command;
+        return { FeatureCmdStatus::GET_COMMAND_UNSUPPORTED, std::monostate{} };
+    }
+
+    virtual FeatureCmdStatus set_cmd(const FeatureCommand& command) {
+        (void)command;
+        return FeatureCmdStatus::SET_COMMAND_UNSUPPORTED;
+    }
 
   protected:
     KeysConfig& keys_config;
@@ -71,6 +70,9 @@ class FeaturesHandler {
     std::string get_feature_log(FeatureType f_type, uint log_id) const;
     FeatureType get_current_feature() const;
     std::string get_current_feature_name() const;
+
+    FeatureCmdResult get_cmd(FeatureType f_type, const FeatureCommand& command) const;
+    FeatureCmdStatus set_cmd(FeatureType f_type, const FeatureCommand& command) const;
 
   private:
     FeaturesHandlerConfig_t config;

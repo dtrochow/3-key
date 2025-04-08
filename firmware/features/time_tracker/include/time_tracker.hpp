@@ -24,55 +24,12 @@
 #include "buttons.hpp"
 #include "features_handler.hpp"
 #include "time.hpp"
+#include "time_tracker_types.hpp"
 #include <optional>
 #include <unordered_map>
+#include <variant>
 
 #include "pico/stdlib.h"
-
-#define MICROSECONDS_IN_SECOND_COUNT 1'000'000UL
-#define SECONDS_IN_HOUR_COUNT 3600UL
-#define MICROSECONDS_IN_MILISECOND_COUNT 1'000UL
-#define MILLISECONDS_IN_SECOND_COUNT 1'000UL
-#define SECONDS_IN_MINUTE_COUNT 60UL
-
-#define TRACING_TIMER_INTERVAL_MS 250UL
-#define MAX_TIME_TRACKER_ENTRIES_COUNT 31
-#define SAVE_INTERVALS_COUNT 4
-
-#define MEDIUM_THRESHOLD_MS (30 * MILLISECONDS_IN_SECOND_COUNT)
-#define LONG_THRESHOLD_MS (45 * MILLISECONDS_IN_SECOND_COUNT)
-
-enum class TimeTrackerLog : uint {
-    CURRENT_WORK_TIME_REPORT     = 0,
-    CURRENT_MEETINGS_TIME_REPORT = 1,
-    CURRENT_SESSION_ID           = 2,
-};
-
-constexpr uint WORK_TRACKING_KEY_ID    = 0;
-constexpr uint MEETING_TRACKING_KEY_ID = 1;
-constexpr uint FUNCTION_KEY_ID         = 2;
-
-typedef struct {
-    uint64_t start_time_us;
-    uint64_t work_time_us;
-    uint64_t meeting_time_us;
-    bool tracking_work;
-    bool tracking_meetings;
-    DateTime_t tracking_date;
-    bool medium_threshold_reached;
-    bool long_threshold_reached;
-} TimeTrackingEntry_t;
-
-struct KeyColorInfo {
-    Key key;
-    Color color;
-};
-
-typedef struct {
-    uint32_t magic;
-    TimeTrackingEntry_t tracking_entries[MAX_TIME_TRACKER_ENTRIES_COUNT];
-    uint active_session;
-} TimeTrackerData_t;
 
 class TimeTracker : public Feature {
   public:
@@ -80,6 +37,8 @@ class TimeTracker : public Feature {
     : Feature(keys_config_), storage(storage_), time(time_) {
         initialize_key_color_map();
     }
+    FeatureCmdResult get_cmd(const FeatureCommand& command) const override;
+    FeatureCmdStatus set_cmd(const FeatureCommand& command) override;
     void handle(Buttons& buttons);
 
   private:
@@ -141,12 +100,18 @@ class TimeTracker : public Feature {
             (total_ms_work + total_ms_meeting) / (MILLISECONDS_IN_SECOND_COUNT * SECONDS_IN_HOUR_COUNT));
     }
 
-    /* Key handling helpers */
+    static bool timer_callback(repeating_timer_t* timer);
+
+    /* -------------------------------------------------------------------------- */
+    /*                            Key handling helpers                            */
+    /* -------------------------------------------------------------------------- */
     void handle_key_0_press(auto& entry, const bool is_long_press);
     void handle_key_1_press(auto& entry, const bool is_long_press);
     void handle_key_2_press(const bool is_long_press);
 
-    /* Leds handling helpers */
+    /* -------------------------------------------------------------------------- */
+    /*                            Leds handling helpers                           */
+    /* -------------------------------------------------------------------------- */
     void set_color(uint key_id, Color color) { keys_config.set_key_color(key_id, color); };
     void led_enable(uint key_id, Color color = Color::None) {
         if (color != Color::None) {
@@ -193,6 +158,5 @@ class TimeTracker : public Feature {
             sleep_ms(sleep_time);
         }
     };
-
-    static bool timer_callback(repeating_timer_t* timer);
+    /* -------------------------------------------------------------------------- */
 };

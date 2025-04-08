@@ -20,6 +20,7 @@
  */
 
 #include <limits>
+#include <pico/types.h>
 
 #include "keys_config.hpp"
 #include "leds_config.hpp"
@@ -52,6 +53,8 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     }
 
     if (tracker->is_time_to_save()) {
+        // @TODO: There is some issue related to the saving data to flash; it must be handled by
+        // some mutexes probably or by disabling interrupts
         tracker->save_tracking_data();
         tracker->zero_intervals_count();
     } else {
@@ -265,4 +268,35 @@ std::string TimeTracker::get_log(uint log_id) const {
 bool TimeTracker::is_date_empty(DateTime_t& date_time) const {
     return ((date_time.day == 0) && (date_time.hour == 0) && (date_time.minute == 0) &&
         (date_time.year == 0) && (date_time.month == 0) && (date_time.day == 0));
+}
+
+FeatureCmdResult TimeTracker::get_cmd(const FeatureCommand& command) const {
+    if (std::holds_alternative<GetTimeTrackerEntryCmd>(command)) {
+        const uint32_t session_id = std::get<GetTimeTrackerEntryCmd>(command).session_id;
+        /* Current session case */
+        if (session_id == uint32_t(-1)) {
+            return { FeatureCmdStatus::SUCCESS, data.tracking_entries[data.active_session] };
+        } else {
+            if (session_id >= MAX_TIME_TRACKER_ENTRIES_COUNT) {
+                return { FeatureCmdStatus::INVALID_PAYLOAD, std::monostate{} };
+            }
+            return { FeatureCmdStatus::SUCCESS, data.tracking_entries[session_id] };
+        }
+    } else if (std::holds_alternative<GetTimeTrackerCurrentActiveSessionIdCmd>(command)) {
+        return { FeatureCmdStatus::SUCCESS, data.active_session };
+    }
+    return { FeatureCmdStatus::INVALID_COMMAND, std::monostate{} };
+}
+
+FeatureCmdStatus TimeTracker::set_cmd(const FeatureCommand& command) {
+    if (std::holds_alternative<NewTimeTrackerSessionCmd>(command)) {
+        move_to_next_session();
+        initialize_new_session();
+        return FeatureCmdStatus::SUCCESS;
+    } else if (std::holds_alternative<GetTimeTrackerEntryCmd>(command)) {
+        return FeatureCmdStatus::SET_COMMAND_UNSUPPORTED;
+    } else if (std::holds_alternative<GetTimeTrackerCurrentActiveSessionIdCmd>(command)) {
+        return FeatureCmdStatus::GET_COMMAND_UNSUPPORTED;
+    }
+    return FeatureCmdStatus::INVALID_COMMAND;
 }

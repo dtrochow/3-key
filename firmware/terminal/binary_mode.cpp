@@ -20,10 +20,14 @@
  */
 
 #include "binary_mode.hpp"
+#include "features_handler.hpp"
+#include "features_handler_types.hpp"
+#include "time_tracker_types.hpp"
 #include <cstdint>
 #include <cstring>
 
-BinaryMode::BinaryMode(Time& time_) : time(time_), binary_mode(false) {}
+BinaryMode::BinaryMode(Time& time_, FeaturesHandler& f_handler_)
+: time(time_), binary_mode(false), f_handler(f_handler_) {}
 
 std::span<uint8_t> BinaryMode::handle(uint8_t ch) {
     binary_buffer.push_back(ch);
@@ -59,8 +63,8 @@ bool BinaryMode::is_binary_mode() {
     return binary_mode;
 }
 
-std::span<uint8_t> BinaryMode::handle_binary_packet(const std::vector<uint8_t>& packet) {
-    std::span<uint8_t> response = {};
+BinCmdResponse BinaryMode::handle_binary_packet(const std::vector<uint8_t>& packet) {
+    BinCmdResponse response = {};
 
     if ((packet.size() < BINARY_MODE_HEADER_SIZE_BYTES) || (packet[0] != BINARY_HEADER_1) ||
         (packet[1] != BINARY_HEADER_2)) {
@@ -70,7 +74,7 @@ std::span<uint8_t> BinaryMode::handle_binary_packet(const std::vector<uint8_t>& 
     const BinaryCommandType command_type = static_cast<BinaryCommandType>(packet[2]);
     const BinaryCommandID command_id     = static_cast<BinaryCommandID>(packet[3]);
 
-    /* Payload length is 4 bytes long */
+    /* Payload length field is 4 bytes long */
     const uint32_t payload_length = static_cast<uint32_t>(packet[4]) |
         (static_cast<uint32_t>(packet[5]) << 8) | (static_cast<uint32_t>(packet[6]) << 16) |
         (static_cast<uint32_t>(packet[7]) << 24);
@@ -98,6 +102,15 @@ std::span<uint8_t> BinaryMode::handle_binary_packet(const std::vector<uint8_t>& 
         case BinaryCommandID::SYNC_TIME:
             response = handle_sync_time_command(payload, command_type);
             break;
+        case BinaryCommandID::GET_TIME_REPORT:
+            response = handle_get_time_report_command(payload, command_type);
+            break;
+        case BinaryCommandID::GET_TIME_SESSION_ID:
+            response = handle_get_time_session_id_command(payload, command_type);
+            break;
+        case BinaryCommandID::TIME_NEW_SESSION:
+            response = handle_time_new_session_command(payload, command_type);
+            break;
         case BinaryCommandID::UNKNOWN:
         default: break;
     }
@@ -116,7 +129,9 @@ uint32_t BinaryMode::calculate_crc32(const uint8_t* data, size_t length) {
     return ~crc;
 }
 
-std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id, BinaryCommandStatus status) {
+std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id,
+    BinaryCommandStatus status,
+    std::span<uint8_t> payload) {
     std::vector<uint8_t> response;
 
     response.push_back(BINARY_HEADER_2);
@@ -125,8 +140,15 @@ std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id
     response.push_back(static_cast<uint8_t>(status));
     response.push_back(static_cast<uint8_t>(command_id));
 
-    /* There is no payload, so the payload_length field will be all zeros */
-    response.insert(response.end(), BINARY_MODE_LENGTH_FIELD_SIZE_BYTES, 0x00);
+    const uint32_t payload_length = payload.size();
+    response.push_back(static_cast<uint8_t>(payload_length & 0xFF));
+    response.push_back(static_cast<uint8_t>((payload_length >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((payload_length >> 16) & 0xFF));
+    response.push_back(static_cast<uint8_t>((payload_length >> 24) & 0xFF));
+
+    if (!payload.empty()) {
+        response.insert(response.end(), payload.begin(), payload.end());
+    }
 
     const uint32_t crc = calculate_crc32(response.data(), response.size());
     uint8_t crc_bytes[sizeof(crc)];
@@ -140,8 +162,7 @@ std::span<uint8_t> BinaryMode::create_binary_response(BinaryCommandID command_id
 /*                              Commands Handling                             */
 /* -------------------------------------------------------------------------- */
 
-std::span<uint8_t> BinaryMode::handle_sync_time_command(const std::vector<uint8_t>& payload,
-    BinaryCommandType cmd_type) {
+BinCmdResponse BinaryMode::handle_sync_time_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type) {
     constexpr size_t sync_time_payload_size = 8;
 
     if (cmd_type == BinaryCommandType::WRITE) {
@@ -158,4 +179,78 @@ std::span<uint8_t> BinaryMode::handle_sync_time_command(const std::vector<uint8_
         return create_binary_response(BinaryCommandID::SYNC_TIME, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
     }
     return create_binary_response(BinaryCommandID::SYNC_TIME, BinaryCommandStatus::SUCCESS);
+}
+
+BinCmdResponse BinaryMode::handle_get_time_report_command(const std::vector<uint8_t>& payload,
+    BinaryCommandType cmd_type) {
+    if (cmd_type != BinaryCommandType::READ) {
+        return create_binary_response(BinaryCommandID::GET_TIME_REPORT, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
+    }
+
+    if (payload.size() != sizeof(uint32_t)) {
+        return create_binary_response(BinaryCommandID::GET_TIME_REPORT, BinaryCommandStatus::INVALID_PAYLOAD);
+    }
+
+    uint32_t session_id;
+    std::memcpy(&session_id, payload.data(), sizeof(session_id));
+
+    if ((session_id >= MAX_TIME_TRACKER_ENTRIES_COUNT) && (session_id != uint32_t(-1))) {
+        return create_binary_response(BinaryCommandID::GET_TIME_REPORT, BinaryCommandStatus::INVALID_PAYLOAD);
+    }
+
+    const auto result = f_handler.get_cmd(FeatureType::TIME_TRACKER, GetTimeTrackerEntryCmd{ session_id });
+    if (result.first != FeatureCmdStatus::SUCCESS) {
+        return create_binary_response(BinaryCommandID::GET_TIME_REPORT, BinaryCommandStatus::ERROR);
+    }
+
+    const auto& entry = std::get<TimeTrackingEntry_t>(result.second);
+
+    std::vector<uint8_t> response_payload(sizeof(entry));
+    std::memcpy(response_payload.data(), &entry, sizeof(entry));
+
+    return create_binary_response(BinaryCommandID::GET_TIME_REPORT, BinaryCommandStatus::SUCCESS,
+        std::span<uint8_t>(response_payload));
+}
+
+BinCmdResponse BinaryMode::handle_get_time_session_id_command(const std::vector<uint8_t>& payload,
+    BinaryCommandType cmd_type) {
+    if (cmd_type != BinaryCommandType::READ) {
+        return create_binary_response(BinaryCommandID::GET_TIME_SESSION_ID, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
+    }
+
+    if (!payload.empty()) {
+        return create_binary_response(BinaryCommandID::GET_TIME_SESSION_ID, BinaryCommandStatus::INVALID_PAYLOAD);
+    }
+
+    const auto result =
+        f_handler.get_cmd(FeatureType::TIME_TRACKER, GetTimeTrackerCurrentActiveSessionIdCmd{});
+    if (result.first != FeatureCmdStatus::SUCCESS) {
+        return create_binary_response(BinaryCommandID::GET_TIME_SESSION_ID, BinaryCommandStatus::ERROR);
+    }
+
+    const auto& entry = std::get<SessionId>(result.second);
+
+    std::vector<uint8_t> response_payload(sizeof(entry));
+    std::memcpy(response_payload.data(), &entry, sizeof(entry));
+
+    return create_binary_response(BinaryCommandID::GET_TIME_SESSION_ID,
+        BinaryCommandStatus::SUCCESS, std::span<uint8_t>(response_payload));
+}
+
+BinCmdResponse BinaryMode::handle_time_new_session_command(const std::vector<uint8_t>& payload,
+    BinaryCommandType cmd_type) {
+    if (cmd_type != BinaryCommandType::WRITE) {
+        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
+    }
+
+    if (!payload.empty()) {
+        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::INVALID_PAYLOAD);
+    }
+
+    const auto status = f_handler.set_cmd(FeatureType::TIME_TRACKER, NewTimeTrackerSessionCmd{});
+    if (status != FeatureCmdStatus::SUCCESS) {
+        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::ERROR);
+    }
+
+    return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::SUCCESS);
 }
