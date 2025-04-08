@@ -9,3 +9,4 @@ openpyxl==3.1.5
 PyYAML==6.0.2
 pyserial==3.5
 plantuml-markdown==3.11.1
+cstruct==6.1.0

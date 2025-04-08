@@ -4,7 +4,7 @@ set(SOURCES
 )
 add_library(${modulename} ${SOURCES})
 target_include_directories(${modulename} PUBLIC include)
-target_link_libraries(${modulename})
+target_link_libraries(${modulename} pico_stdlib)
 
 # Apply the library-specific compile flags
 if(DEFINED LIBRARY_COMPILE_FLAGS)

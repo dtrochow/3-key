@@ -20,6 +20,7 @@
  */
 
 #include "time.hpp"
+#include "pico/time.h"
 
 enum class Month : uint8_t {
     JANUARY   = 1,
@@ -36,19 +37,21 @@ enum class Month : uint8_t {
     DECEMBER  = 12,
 };
 
-Time::Time() : current_time_us(0) {}
+Time::Time() : synced_time_us(0) {}
 Time::~Time() = default;
 
 uint64_t Time::get_current_time_us() const {
-    return current_time_us;
+    const uint64_t current_time_us = get_absolute_time();
+    const uint64_t elapsed_time_us = (current_time_us - synced_device_time_us);
+    return (synced_time_us + elapsed_time_us);
 }
 
 uint64_t Time::get_current_time_ms() const {
-    return current_time_us / 1000;
+    return get_current_time_us() / 1000;
 }
 
 uint64_t Time::get_current_time_s() const {
-    return current_time_us / 1000000;
+    return get_current_time_us() / 1000000;
 }
 
 DateTime_t Time::get_current_date_and_time() const {
@@ -112,5 +115,6 @@ std::string Time::get_current_date_and_time_string() const {
 }
 
 void Time::set_current_time_us(uint64_t time_us) {
-    current_time_us = time_us;
+    synced_time_us        = time_us;
+    synced_device_time_us = get_absolute_time();
 }

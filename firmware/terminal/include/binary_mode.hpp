@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "features_handler.hpp"
 #include "time.hpp"
 #include <cstdint>
 #include <span>
@@ -39,8 +40,11 @@ enum class BinaryCommandType : uint8_t {
 };
 
 enum class BinaryCommandID : uint8_t {
-    SYNC_TIME = 0x01,
-    UNKNOWN   = 0xFF,
+    SYNC_TIME           = 0x01,
+    GET_TIME_REPORT     = 0x02,
+    GET_TIME_SESSION_ID = 0x03,
+    TIME_NEW_SESSION    = 0x04,
+    UNKNOWN             = 0xFF,
 };
 
 enum class BinaryCommandStatus : uint8_t {
@@ -51,9 +55,11 @@ enum class BinaryCommandStatus : uint8_t {
     UNKNOWN              = 0xFF,
 };
 
+using BinCmdResponse = std::span<uint8_t>;
+
 class BinaryMode {
   public:
-    BinaryMode(Time& time);
+    BinaryMode(Time& time, FeaturesHandler& f_handler_);
     ~BinaryMode() = default;
 
     std::span<uint8_t> handle(uint8_t ch);
@@ -63,12 +69,21 @@ class BinaryMode {
   private:
     Time& time;
     bool binary_mode;
+    FeaturesHandler& f_handler;
     std::vector<uint8_t> binary_buffer;
 
-    std::span<uint8_t> create_binary_response(BinaryCommandID command_id, BinaryCommandStatus status);
+    /* -------------------------------------------------------------------------- */
+    /*                              Commands handling                             */
+    /* -------------------------------------------------------------------------- */
+    // clang-format off
+    BinCmdResponse create_binary_response(BinaryCommandID command_id, BinaryCommandStatus status, std::span<uint8_t> payload = {});
     std::span<uint8_t> handle_binary_packet(const std::vector<uint8_t>& packet);
     uint32_t calculate_crc32(const uint8_t* data, size_t length);
 
-    /* Commands handling */
-    std::span<uint8_t> handle_sync_time_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_sync_time_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_get_time_report_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_get_time_session_id_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_time_new_session_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    // clang-format on
+    /* -------------------------------------------------------------------------- */
 };

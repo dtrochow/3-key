@@ -48,5 +48,6 @@ class Time {
     void set_current_time_us(uint64_t time_us);
 
   private:
-    uint64_t current_time_us;
+    uint64_t synced_time_us;
+    uint64_t synced_device_time_us;
 };
