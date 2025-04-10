@@ -16,6 +16,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
+set(UNIT_TEST 1)
 
 set(FIRMWARE_PATH ${CMAKE_CURRENT_LIST_DIR}/../firmware)
 
@@ -33,10 +34,14 @@ add_executable(time_test
 
 add_subdirectory(../firmware/time ${CMAKE_CURRENT_BINARY_DIR}/firmware_time)
 
+target_compile_definitions(time PRIVATE UNIT_TEST) # Add this line
+
 target_link_libraries(time_test
   time
   gtest_main
 )
+
+target_compile_definitions(time_test PRIVATE UNIT_TEST)
 
 # -------------------------------------------------------------------------- #
 #                                    Tests                                   #
