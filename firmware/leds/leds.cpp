@@ -48,6 +48,7 @@ void Leds::enable(uint led_id, bool r) {
         case Blue: leds[led_id] = Led(0, 0, 255); break;
         case Yellow: leds[led_id] = Led(255, 255, 0); break;
         case Purple: leds[led_id] = Led(255, 0, 255); break;
+        case Orange: leds[led_id] = Led(255, 127, 0); break;
         case None: leds[led_id] = Led(0, 0, 0); break;
         default: break;
     }

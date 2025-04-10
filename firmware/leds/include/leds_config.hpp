@@ -34,4 +34,4 @@ struct Led {
     Led(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0) : red(r), green(g), blue(b) {}
 };
 
-enum Color { Red, Green, Blue, Yellow, Purple, None };
+enum Color { Red, Green, Blue, Yellow, Purple, Orange, None };
