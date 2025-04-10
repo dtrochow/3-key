@@ -29,7 +29,7 @@
 Storage::Storage(mutex_t& mutex_) : mutex(mutex_) {
     sector.resize(blobs_per_sector);
     max_blob_id        = (STORAGE_SIZE / BLOB_SLOT_SIZE_BYTES) - 1;
-    storage_start_addr = (const uint8_t*)(XIP_BASE + STORAGE_FLASH_OFFSET);
+    storage_start_addr = reinterpret_cast<const uint8_t*>(XIP_BASE + STORAGE_FLASH_OFFSET);
 }
 
 StorageStatus Storage::init() {

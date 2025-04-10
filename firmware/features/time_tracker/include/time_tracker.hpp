@@ -85,6 +85,7 @@ class TimeTracker : public Feature {
         const auto& entry = data.tracking_entries[data.active_session];
         return (entry.long_threshold_reached || entry.medium_threshold_reached);
     }
+    void check_thresholds();
 
     static uint64_t get_milliseconds_tracked(const TimeTrackingEntry_t& entry) {
         const uint64_t total_ms_work    = entry.work_time_us / MICROSECONDS_IN_MILISECOND_COUNT;

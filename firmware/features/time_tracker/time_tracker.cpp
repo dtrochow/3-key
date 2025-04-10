@@ -22,6 +22,7 @@
 #include <limits>
 #include <pico/types.h>
 
+#include "buttons_config.hpp"
 #include "keys_config.hpp"
 #include "leds_config.hpp"
 #include "storage_config.hpp"
@@ -53,8 +54,6 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     }
 
     if (tracker->is_time_to_save()) {
-        // @TODO: There is some issue related to the saving data to flash; it must be handled by
-        // some mutexes probably or by disabling interrupts
         tracker->save_tracking_data();
         tracker->zero_intervals_count();
     } else {
@@ -71,6 +70,7 @@ void TimeTracker::init() {
 
     disable_all_leds();
     stop_tracking();
+    check_thresholds();
 
     keys_config.switch_leds_mode(LedsMode::HANDLED_BY_FEATURE);
     set_tracking_date();
@@ -124,6 +124,16 @@ void TimeTracker::stop_tracking() {
     }
 }
 
+void TimeTracker::check_thresholds() {
+    const auto& entry = data.tracking_entries[data.active_session];
+    if (entry.medium_threshold_reached) {
+        led_enable(FUNCTION_KEY_ID, Color::Yellow);
+    }
+    if (entry.long_threshold_reached) {
+        led_enable(FUNCTION_KEY_ID, Color::Red);
+    }
+}
+
 void TimeTracker::set_tracking_date() {
     auto& entry = data.tracking_entries[data.active_session];
     if (is_date_empty(entry.tracking_date))
@@ -162,9 +172,26 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
             led_enable(MEETING_TRACKING_KEY_ID, color);
         }
     } else {
-        // Show current session ID by blinking the LED 0 & 1
-        // LED 0 - tens part
-        // LED 1 - ones part
+        /*
+            Show current session ID by blinking the LED 0 & 1
+            LED 0 - tens part
+            LED 1 - ones part
+        */
+        const std::vector<ButtonConfig> buttons = keys_config.get_key_cfgs();
+        disable_all_leds();
+
+        const uint session_id           = data.active_session;
+        const uint led_0                = session_id / 10;
+        const uint led_1                = session_id % 10;
+        constexpr uint led_blink_period = 500;
+        led_blink(WORK_TRACKING_KEY_ID, led_blink_period, led_0);
+        led_blink(MEETING_TRACKING_KEY_ID, led_blink_period, led_1);
+
+        for (uint id = 0; id < buttons.size(); ++id) {
+            const auto& button = buttons[id];
+            if (button.enabled)
+                led_enable(id, button.color);
+        }
     }
 }
 

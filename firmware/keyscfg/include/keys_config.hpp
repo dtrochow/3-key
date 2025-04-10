@@ -128,20 +128,20 @@ class KeysConfig {
 
     uint get_keys_count() const { return config.keys_count; }
 
-    void set_key_color(uint key_id, Color color) {
-        if (key_id >= config.keys_count) {
+    void set_key_color(uint key_id, Color color, bool save = false) {
+        if (key_id >= config.keys_count)
             return;
-        }
         config.keys[key_id].color = color;
-        storage.save_blob(BlobType::KEYS_CONFIG, config);
+        if (save)
+            storage.save_blob(BlobType::KEYS_CONFIG, config);
     }
 
-    void set_key_value(uint key_id, Button btn) {
-        if (key_id >= config.keys_count) {
+    void set_key_value(uint key_id, Button btn, bool save = false) {
+        if (key_id >= config.keys_count)
             return;
-        }
         config.keys[key_id].key_value = btn;
-        storage.save_blob(BlobType::KEYS_CONFIG, config);
+        if (save)
+            storage.save_blob(BlobType::KEYS_CONFIG, config);
     }
 
     Color get_key_color(uint key_id) const {
