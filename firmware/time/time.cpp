@@ -20,7 +20,21 @@
  */
 
 #include "time.hpp"
+
+#ifdef UNIT_TEST
+// @TODO: Introduce a mock time library
+static uint64_t mock_time_us = 0;
+
+void set_mock_time_us(uint64_t time_us) {
+    mock_time_us = time_us;
+}
+
+uint64_t get_absolute_time() {
+    return mock_time_us;
+}
+#else
 #include "pico/time.h"
+#endif
 
 enum class Month : uint8_t {
     JANUARY   = 1,
