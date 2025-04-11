@@ -3,9 +3,11 @@ set(SOURCES
         time.cpp
 )
 add_library(${modulename} ${SOURCES})
-target_include_directories(${modulename} PUBLIC include)
 
-if(NOT UNIT_TEST)
+if((UNIT_TEST))
+    target_include_directories(${modulename} PUBLIC include mock)
+else()
+    target_include_directories(${modulename} PUBLIC include)
     target_link_libraries(${modulename} pico_stdlib)
 endif()
 
