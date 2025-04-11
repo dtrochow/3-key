@@ -6,6 +6,9 @@ import argparse
 import logging
 from serial.tools import list_ports
 from time import sleep
+from tools.utils import find_pico_device
+
+UART_BAUD_RATE = 115200
 
 
 def configure_logging():
@@ -134,31 +137,56 @@ def run_build_and_run_unit_tests():
         raise
 
 
+def send_erase_command():
+    """Send the erase command to the device via UART."""
+    pico_port = find_pico_device()
+    try:
+        logging.info(f"Connecting to Pico on port {pico_port} to send erase command...")
+        with serial.Serial(pico_port, baudrate=UART_BAUD_RATE, timeout=1) as ser:
+            ser.write(b'erase\n') 
+            logging.info("Erase command sent successfully.")
+    except Exception as e:
+        logging.error(f"Failed to send erase command: {e}")
+        raise
+
+
 def main():
     configure_logging()
 
     check_picotool_installed()
 
     parser = argparse.ArgumentParser(description="Firmware build and load script for Raspberry Pi Pico.")
-    parser.add_argument("-l", "--load", action="store_true", help="Load firmware to the device.")
-    parser.add_argument("-c", "--clean", action="store_true", help="Clean build before building firmware.")
+    parser.add_argument("-c", "--clean", action="store_true", help="Clean build directory before building firmware.")
     parser.add_argument("-t", "--type", choices=["Debug", "Release"], default="Release", help="Build type (Debug or Release). Default is Release.")
-    parser.add_argument("-u", "--unittest", action="store_true", help="Build and run unit tests")
+
+    parser.add_argument("-l", "--load", action="store_true", help="Load firmware to the device.")
+    parser.add_argument("-e", "--erase", action="store_true", help="Erase device storage before loading firmware (optional).")
+
+    parser.add_argument("-u", "--unittest", action="store_true", help="Build and run unit tests.")
+
     args = parser.parse_args()
 
     try:
-        if not args.unittest:
-            logging.info("Building firmware.")
-            build_firmware(args.clean, args.type)
-
-        if not args.unittest and args.load:
-            logging.info("Entering boot mode to load firmware.")
-            enter_boot_mode()
-            load_firmware()
+        if args.clean:
+            logging.info("Cleaning build directory.")
+            clean_build_directory(get_absolute_path("build"))
 
         if args.unittest:
             logging.info("Building and running unit tests.")
             run_build_and_run_unit_tests()
+            return
+
+        logging.info(f"Building firmware with type: {args.type}.")
+        build_firmware(clean=False, build_type=args.type)
+
+        if args.load:
+            if args.erase:
+                logging.info("Erasing device storage before loading firmware.")
+                send_erase_command()
+
+            logging.info("Entering boot mode to load firmware.")
+            enter_boot_mode()
+            load_firmware()
 
     except Exception as e:
         logging.error(f"Script execution failed: {e}")
