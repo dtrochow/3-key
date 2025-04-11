@@ -55,7 +55,6 @@ set(LIBRARY_COMPILE_FLAGS
     -Werror\
     -Wall\
     -Wextra\
-    -Wextra\
     -Wduplicated-cond\
     -Wnull-dereference\
     -Wduplicated-branches\
@@ -71,6 +70,14 @@ set(LIBRARY_COMPILE_FLAGS
     -Wswitch-default\
     -Wswitch-enum\
     -Wcast-align\
+    -Wstrict-aliasing\
+    -Wstrict-overflow\
+    -Wundef\
+    -Wlogical-op\
+    -Wmissing-declarations\
+    -Wredundant-decls\
+    -Wzero-as-null-pointer-constant\
+    -Wnon-virtual-dtor\
     "
 )
 
