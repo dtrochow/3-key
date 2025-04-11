@@ -76,11 +76,11 @@ The `features` directory contains:
 
 - Integrate the Feature with the `Terminal`
     - Open `terminal.cpp`.
-    - Update the handle_feature_command method to parse the new feature name and map it to `FeatureType`.
+    - Update the handle_feature_cmd method to parse the new feature name and map it to `FeatureType`.
     - Example:
 
     ```cpp
-    bool Terminal::handle_feature_command(const std::vector<std::string>& params) {
+    bool Terminal::handle_feature_cmd(const std::vector<std::string>& params) {
         if (params.size() != 1) {
             add_log("Error: feature requires exactly 1 parameter");
             return false;

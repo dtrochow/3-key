@@ -44,7 +44,7 @@ std::span<uint8_t> TextMode::handle(char ch) {
     } else if (is_enter) {
         const std::string command = text_buffer.substr(start_string.length());
         text_buffer.clear();
-        (void)handle_command(command);
+        (void)handle_cmd(command);
         text_buffer += "\n" + start_string;
     } else if (is_new_valid_char(ch)) {
         text_buffer += ch;
@@ -70,7 +70,7 @@ bool TextMode::is_new_valid_char(char& ch) const {
     return (isprint(ch) && text_buffer.size() < max_chars + 6);
 }
 
-bool TextMode::handle_command(const std::string& command_str) {
+bool TextMode::handle_cmd(const std::string& command_str) {
     std::istringstream iss(command_str);
     std::string command_name;
     iss >> command_name;
@@ -83,10 +83,10 @@ bool TextMode::handle_command(const std::string& command_str) {
 
     const auto it     = command_map.find(command_name);
     const Command cmd = (it != command_map.end()) ? it->second : Command::UNKNOWN;
-    return dispatch_command(cmd, parameters);
+    return dispatch_cmd(cmd, parameters);
 }
 
-bool TextMode::dispatch_command(Command command, const std::vector<std::string>& params) {
+bool TextMode::dispatch_cmd(Command command, const std::vector<std::string>& params) {
     switch (command) {
         case Command::RESET: {
             reset_to_bootloader();
@@ -102,16 +102,16 @@ bool TextMode::dispatch_command(Command command, const std::vector<std::string>&
             return true;
         }
         case Command::CHANGE_COLOR: {
-            return handle_change_color_command(params);
+            return handle_change_color_cmd(params);
         }
         case Command::FEATURE: {
-            return handle_feature_command(params);
+            return handle_feature_cmd(params);
         }
         case Command::TIME: {
-            return handle_time_command(params);
+            return handle_time_cmd(params);
         }
         case Command::LONG_PRESS_MS: {
-            return handle_long_press_ms_command(params);
+            return handle_long_press_ms_cmd(params);
         }
         case Command::UNKNOWN:
         default: return false;
@@ -126,7 +126,7 @@ bool TextMode::is_valid_number(const std::string& str) const {
 /*                              Commands Handling                             */
 /* -------------------------------------------------------------------------- */
 
-bool TextMode::handle_change_color_command(const std::vector<std::string>& params) {
+bool TextMode::handle_change_color_cmd(const std::vector<std::string>& params) {
     if (params.size() < 2) {
         add_log("Error: change_color requires 2 parameters");
         return false;
@@ -158,7 +158,7 @@ bool TextMode::handle_change_color_command(const std::vector<std::string>& param
     return true;
 }
 
-bool TextMode::handle_feature_command(const std::vector<std::string>& params) {
+bool TextMode::handle_feature_cmd(const std::vector<std::string>& params) {
     if (params.size() == 0) {
         add_log("Current feature: " + f_handler.get_current_feature_name());
         return true;
@@ -188,7 +188,7 @@ bool TextMode::handle_feature_command(const std::vector<std::string>& params) {
     return true;
 }
 
-bool TextMode::handle_time_command(const std::vector<std::string>& params) {
+bool TextMode::handle_time_cmd(const std::vector<std::string>& params) {
     if (params.size() < 1) {
         add_log("Error: 1 argument required");
         return false;
@@ -218,7 +218,7 @@ bool TextMode::handle_time_command(const std::vector<std::string>& params) {
     return true;
 }
 
-bool TextMode::handle_long_press_ms_command(const std::vector<std::string>& params) {
+bool TextMode::handle_long_press_ms_cmd(const std::vector<std::string>& params) {
     if (params.size() != 1) {
         add_log("Error: 1 argument required");
         return false;

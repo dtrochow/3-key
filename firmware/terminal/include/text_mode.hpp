@@ -65,8 +65,8 @@ class TextMode {
     bool is_new_valid_char(char& ch) const;
     bool is_valid_number(const std::string& str) const;
 
-    bool dispatch_command(Command command, const std::vector<std::string>& params);
-    bool handle_command(const std::string& command_str);
+    bool dispatch_cmd(Command command, const std::vector<std::string>& params);
+    bool handle_cmd(const std::string& command_str);
     void add_log(std::string log);
 
     /* Command strings mapping */
@@ -82,8 +82,8 @@ class TextMode {
 
     /* Commands handling */
     void reset_to_bootloader() const;
-    bool handle_change_color_command(const std::vector<std::string>& params);
-    bool handle_feature_command(const std::vector<std::string>& params);
-    bool handle_time_command(const std::vector<std::string>& params);
-    bool handle_long_press_ms_command(const std::vector<std::string>& params);
+    bool handle_change_color_cmd(const std::vector<std::string>& params);
+    bool handle_feature_cmd(const std::vector<std::string>& params);
+    bool handle_time_cmd(const std::vector<std::string>& params);
+    bool handle_long_press_ms_cmd(const std::vector<std::string>& params);
 };
