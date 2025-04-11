@@ -28,6 +28,7 @@
 #include "storage_config.hpp"
 #include "time.hpp"
 #include "time_tracker.hpp"
+#include "time_tracker_types.hpp"
 
 repeating_timer_t* tracking_timer = nullptr;
 
@@ -45,10 +46,12 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     }
 
     const uint64_t total_tracked_time_ms = get_milliseconds_tracked(entry);
-    if (total_tracked_time_ms >= MEDIUM_THRESHOLD_MS && !entry.medium_threshold_reached) {
+    const uint64_t medium_threshold      = tracker->data.medium_threshold;
+    const uint64_t long_threshold        = tracker->data.long_threshold;
+    if ((total_tracked_time_ms >= medium_threshold) && !entry.medium_threshold_reached) {
         tracker->led_enable(FUNCTION_KEY_ID, Color::Yellow);
         entry.medium_threshold_reached = true;
-    } else if (total_tracked_time_ms >= LONG_THRESHOLD_MS && !entry.long_threshold_reached) {
+    } else if ((total_tracked_time_ms >= long_threshold) && !entry.long_threshold_reached) {
         tracker->led_enable(FUNCTION_KEY_ID, Color::Red);
         entry.long_threshold_reached = true;
     }
@@ -91,7 +94,9 @@ void TimeTracker::deinit() {
 }
 
 void TimeTracker::factory_init() {
-    data.magic = BLOB_MAGIC;
+    data.magic            = BLOB_MAGIC;
+    data.medium_threshold = MEDIUM_THRESHOLD_MS_DEFAULT;
+    data.long_threshold   = LONG_THRESHOLD_MS_DEFAULT;
 
     for (auto& entry : data.tracking_entries) {
         entry.start_time_us            = 0;
@@ -319,6 +324,22 @@ FeatureCmdStatus TimeTracker::set_cmd(const FeatureCommand& command) {
     if (std::holds_alternative<NewTimeTrackerSessionCmd>(command)) {
         move_to_next_session();
         initialize_new_session();
+        return FeatureCmdStatus::SUCCESS;
+    } else if (std::holds_alternative<SetTimeTrackerMediumThresholdCmd>(command)) {
+        const auto threshold_ms = std::get<SetTimeTrackerMediumThresholdCmd>(command).threshold_ms;
+        if (threshold_ms > std::numeric_limits<uint64_t>::max()) {
+            return FeatureCmdStatus::INVALID_PAYLOAD;
+        }
+        data.medium_threshold = threshold_ms;
+        save_tracking_data();
+        return FeatureCmdStatus::SUCCESS;
+    } else if (std::holds_alternative<SetTimeTrackerLongThresholdCmd>(command)) {
+        const auto threshold_ms = std::get<SetTimeTrackerLongThresholdCmd>(command).threshold_ms;
+        if (threshold_ms > std::numeric_limits<uint64_t>::max()) {
+            return FeatureCmdStatus::INVALID_PAYLOAD;
+        }
+        data.long_threshold = threshold_ms;
+        save_tracking_data();
         return FeatureCmdStatus::SUCCESS;
     } else if (std::holds_alternative<GetTimeTrackerEntryCmd>(command)) {
         return FeatureCmdStatus::SET_COMMAND_UNSUPPORTED;

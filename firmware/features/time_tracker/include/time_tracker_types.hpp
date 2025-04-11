@@ -35,9 +35,8 @@
 #define MAX_TIME_TRACKER_ENTRIES_COUNT 31
 #define SAVE_INTERVALS_COUNT 4
 
-// @TODO: Make these values configurable
-#define MEDIUM_THRESHOLD_MS (6 * SECONDS_IN_HOUR_COUNT * MILLISECONDS_IN_SECOND_COUNT)
-#define LONG_THRESHOLD_MS (7.5 * SECONDS_IN_HOUR_COUNT * MILLISECONDS_IN_SECOND_COUNT)
+#define MEDIUM_THRESHOLD_MS_DEFAULT (6 * SECONDS_IN_HOUR_COUNT * MILLISECONDS_IN_SECOND_COUNT)
+#define LONG_THRESHOLD_MS_DEFAULT (7.5 * SECONDS_IN_HOUR_COUNT * MILLISECONDS_IN_SECOND_COUNT)
 
 using SessionId = uint;
 
@@ -75,4 +74,6 @@ typedef struct {
     uint32_t magic;
     TimeTrackingEntry_t tracking_entries[MAX_TIME_TRACKER_ENTRIES_COUNT];
     SessionId active_session;
+    uint64_t medium_threshold;
+    uint64_t long_threshold;
 } TimeTrackerData_t;

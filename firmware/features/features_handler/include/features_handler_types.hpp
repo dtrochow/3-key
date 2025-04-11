@@ -46,6 +46,12 @@ struct GetTimeTrackerEntryCmd {
 };
 struct GetTimeTrackerCurrentActiveSessionIdCmd {};
 struct NewTimeTrackerSessionCmd {};
+struct SetTimeTrackerMediumThresholdCmd {
+    uint32_t threshold_ms;
+};
+struct SetTimeTrackerLongThresholdCmd {
+    uint32_t threshold_ms;
+};
 
 /* -------------------------------------------------------------------------- */
 
@@ -57,7 +63,9 @@ struct NewTimeTrackerSessionCmd {};
 using FeatureCommand =
     std::variant<GetTimeTrackerEntryCmd,
                  GetTimeTrackerCurrentActiveSessionIdCmd,
-                 NewTimeTrackerSessionCmd>;
+                 NewTimeTrackerSessionCmd,
+                 SetTimeTrackerMediumThresholdCmd,
+                 SetTimeTrackerLongThresholdCmd>;
 
 // Define possible return types for get_cmd
 using FeatureCmdResultVariant = std::variant<std::monostate, TimeTrackingEntry_t, SessionId>;

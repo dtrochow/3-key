@@ -40,11 +40,13 @@ enum class BinaryCommandType : uint8_t {
 };
 
 enum class BinaryCommandID : uint8_t {
-    SYNC_TIME           = 0x01,
-    GET_TIME_REPORT     = 0x02,
-    GET_TIME_SESSION_ID = 0x03,
-    TIME_NEW_SESSION    = 0x04,
-    UNKNOWN             = 0xFF,
+    SYNC_TIME                 = 0x01,
+    GET_TIME_REPORT           = 0x02,
+    GET_TIME_SESSION_ID       = 0x03,
+    TIME_NEW_SESSION          = 0x04,
+    TIME_SET_MEDIUM_THRESHOLD = 0x05,
+    TIME_SET_LONG_THRESHOLD   = 0x06,
+    UNKNOWN                   = 0xFF,
 };
 
 enum class BinaryCommandStatus : uint8_t {
@@ -80,10 +82,16 @@ class BinaryMode {
     std::span<uint8_t> handle_binary_packet(const std::vector<uint8_t>& packet);
     uint32_t calculate_crc32(const uint8_t* data, size_t length);
 
-    BinCmdResponse handle_sync_time_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
-    BinCmdResponse handle_get_time_report_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
-    BinCmdResponse handle_get_time_session_id_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
-    BinCmdResponse handle_time_new_session_command(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_sync_time_cmd(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+
+    /* Feature GET commands */
+    BinCmdResponse handle_get_time_report_cmd(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_get_time_session_id_cmd(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+
+    /* Feature SET commands */
+    BinCmdResponse handle_set_time_new_session_cmd(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_set_time_medium_threshold_cmd(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
+    BinCmdResponse handle_set_time_long_threshold_cmd(const std::vector<uint8_t>& payload, BinaryCommandType cmd_type);
     // clang-format on
     /* -------------------------------------------------------------------------- */
 };
