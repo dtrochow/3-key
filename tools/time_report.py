@@ -9,6 +9,7 @@ import logging
 import cstruct
 
 MICROSECONDS_IN_SECOND_COUNT = 1_000_000
+MILLISECONDS_IN_SECOND_COUNT = 1_000
 
 UART_BAUD_RATE = 115200
 
@@ -236,9 +237,9 @@ def set_threshold(serial_port, threshold, type="medium"):
     packet = create_binary_packet(CommandType.WRITE, command_id, payload)
     response = send_binary_packet(serial_port, packet)
 
-    status, command_id = parse_response(response)
-    if command_id != command_id.value:
-        raise ValueError("Mismatched command ID in response")
+    status, resp_command_id = parse_response(response)
+    if command_id.value != resp_command_id:
+        raise ValueError(f"Mismatched command ID in response: expected {command_id.value}, got {resp_command_id}")
 
     if status != 0:
         raise ValueError(f"Failed to set {type} threshold: {status}")
@@ -253,9 +254,9 @@ def set_threshold_command(serial_port, threshold_type, time_value):
     if hours < 0 or minutes < 0 or minutes >= 60:
         raise ValueError("Invalid time input. Hours must be >= 0, and minutes must be between 0 and 59.")
 
-    threshold_us = (hours * 3600 + minutes * 60) * MICROSECONDS_IN_SECOND_COUNT
+    threshold_us = (hours * 3600 + minutes * 60) * MILLISECONDS_IN_SECOND_COUNT 
     set_threshold(serial_port, threshold_us, type=threshold_type)
-    log.info(f"Set {threshold_type} threshold to {hours} hours and {minutes} minutes ({threshold_us} microseconds).")
+    log.info(f"Set {threshold_type} threshold to {hours} hours and {minutes} minutes ({threshold_us} milliseconds).")
 
 # ---------------------------------------------------------------------------- #
 

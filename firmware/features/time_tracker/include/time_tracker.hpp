@@ -129,9 +129,10 @@ class TimeTracker : public Feature {
     }
 
     void next_session_animation(Color color) {
+        constexpr uint DELAY_MS = 300;
         for (uint i = 0; i < keys_config.get_keys_count(); ++i) {
             led_enable(i, color);
-            sleep_ms(500);
+            sleep_ms(DELAY_MS);
         }
         disable_all_leds();
     }
