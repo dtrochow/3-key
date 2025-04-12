@@ -264,11 +264,13 @@ BinCmdResponse BinaryMode::handle_set_time_new_session_cmd(const std::vector<uin
 BinCmdResponse BinaryMode::handle_set_time_medium_threshold_cmd(const std::vector<uint8_t>& payload,
     BinaryCommandType cmd_type) {
     if (cmd_type != BinaryCommandType::WRITE) {
-        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
+        return create_binary_response(
+            BinaryCommandID::TIME_SET_MEDIUM_THRESHOLD, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
     }
 
     if (payload.size() != sizeof(uint32_t)) {
-        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::INVALID_PAYLOAD);
+        return create_binary_response(
+            BinaryCommandID::TIME_SET_MEDIUM_THRESHOLD, BinaryCommandStatus::INVALID_PAYLOAD);
     }
 
     uint32_t threshold_ms;
@@ -277,20 +279,21 @@ BinCmdResponse BinaryMode::handle_set_time_medium_threshold_cmd(const std::vecto
     const auto status =
         f_handler.set_cmd(FeatureType::TIME_TRACKER, SetTimeTrackerMediumThresholdCmd{ threshold_ms });
     if (status != FeatureCmdStatus::SUCCESS) {
-        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::ERROR);
+        return create_binary_response(BinaryCommandID::TIME_SET_MEDIUM_THRESHOLD, BinaryCommandStatus::ERROR);
     }
 
-    return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::SUCCESS);
+    return create_binary_response(BinaryCommandID::TIME_SET_MEDIUM_THRESHOLD, BinaryCommandStatus::SUCCESS);
 }
 
 BinCmdResponse BinaryMode::handle_set_time_long_threshold_cmd(const std::vector<uint8_t>& payload,
     BinaryCommandType cmd_type) {
     if (cmd_type != BinaryCommandType::WRITE) {
-        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
+        return create_binary_response(
+            BinaryCommandID::TIME_SET_LONG_THRESHOLD, BinaryCommandStatus::UNSUPPORTED_CMP_TYPE);
     }
 
     if (payload.size() != sizeof(uint32_t)) {
-        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::INVALID_PAYLOAD);
+        return create_binary_response(BinaryCommandID::TIME_SET_LONG_THRESHOLD, BinaryCommandStatus::INVALID_PAYLOAD);
     }
 
     uint32_t threshold_ms;
@@ -299,8 +302,8 @@ BinCmdResponse BinaryMode::handle_set_time_long_threshold_cmd(const std::vector<
     const auto status =
         f_handler.set_cmd(FeatureType::TIME_TRACKER, SetTimeTrackerLongThresholdCmd{ threshold_ms });
     if (status != FeatureCmdStatus::SUCCESS) {
-        return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::ERROR);
+        return create_binary_response(BinaryCommandID::TIME_SET_LONG_THRESHOLD, BinaryCommandStatus::ERROR);
     }
 
-    return create_binary_response(BinaryCommandID::TIME_NEW_SESSION, BinaryCommandStatus::SUCCESS);
+    return create_binary_response(BinaryCommandID::TIME_SET_LONG_THRESHOLD, BinaryCommandStatus::SUCCESS);
 }

@@ -46,8 +46,8 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     }
 
     const uint64_t total_tracked_time_ms = get_milliseconds_tracked(entry);
-    const uint64_t medium_threshold      = tracker->data.medium_threshold;
-    const uint64_t long_threshold        = tracker->data.long_threshold;
+    const uint64_t medium_threshold      = tracker->data.medium_threshold_ms;
+    const uint64_t long_threshold        = tracker->data.long_threshold_ms;
     if ((total_tracked_time_ms >= medium_threshold) && !entry.medium_threshold_reached) {
         tracker->led_enable(FUNCTION_KEY_ID, Color::Yellow);
         entry.medium_threshold_reached = true;
@@ -94,9 +94,9 @@ void TimeTracker::deinit() {
 }
 
 void TimeTracker::factory_init() {
-    data.magic            = BLOB_MAGIC;
-    data.medium_threshold = MEDIUM_THRESHOLD_MS_DEFAULT;
-    data.long_threshold   = LONG_THRESHOLD_MS_DEFAULT;
+    data.magic               = BLOB_MAGIC;
+    data.medium_threshold_ms = MEDIUM_THRESHOLD_MS_DEFAULT;
+    data.long_threshold_ms   = LONG_THRESHOLD_MS_DEFAULT;
 
     for (auto& entry : data.tracking_entries) {
         entry.start_time_us            = 0;
@@ -189,8 +189,8 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
         const uint led_0                = session_id / 10;
         const uint led_1                = session_id % 10;
         constexpr uint led_blink_period = 500;
-        led_blink(WORK_TRACKING_KEY_ID, led_blink_period, led_0);
-        led_blink(MEETING_TRACKING_KEY_ID, led_blink_period, led_1);
+        led_blink(WORK_TRACKING_KEY_ID, led_blink_period, led_0, Color::Green);
+        led_blink(MEETING_TRACKING_KEY_ID, led_blink_period, led_1, Color::Green);
 
         for (uint id = 0; id < buttons.size(); ++id) {
             const auto& button = buttons[id];
@@ -215,9 +215,9 @@ void TimeTracker::handle_key_2_press(const bool is_long_press) {
             /* Tracked hours indicator */
             const uint hours = get_hours_tracked();
             if (hours > 0) {
-                led_blink(FUNCTION_KEY_ID, 800, hours, color);
+                led_blink(FUNCTION_KEY_ID, 800, hours, Color::Green);
             } else {
-                led_blink(FUNCTION_KEY_ID, 800, 1, color);
+                led_blink(FUNCTION_KEY_ID, 800, 1, Color::Green);
             }
         }
     }
@@ -330,7 +330,7 @@ FeatureCmdStatus TimeTracker::set_cmd(const FeatureCommand& command) {
         if (threshold_ms > std::numeric_limits<uint64_t>::max()) {
             return FeatureCmdStatus::INVALID_PAYLOAD;
         }
-        data.medium_threshold = threshold_ms;
+        data.medium_threshold_ms = threshold_ms;
         save_tracking_data();
         return FeatureCmdStatus::SUCCESS;
     } else if (std::holds_alternative<SetTimeTrackerLongThresholdCmd>(command)) {
@@ -338,7 +338,7 @@ FeatureCmdStatus TimeTracker::set_cmd(const FeatureCommand& command) {
         if (threshold_ms > std::numeric_limits<uint64_t>::max()) {
             return FeatureCmdStatus::INVALID_PAYLOAD;
         }
-        data.long_threshold = threshold_ms;
+        data.long_threshold_ms = threshold_ms;
         save_tracking_data();
         return FeatureCmdStatus::SUCCESS;
     } else if (std::holds_alternative<GetTimeTrackerEntryCmd>(command)) {
