@@ -145,8 +145,38 @@ void TimeTracker::set_tracking_date() {
         entry.tracking_date = time.get_current_date_and_time();
 }
 
+void TimeTracker::save_buttons_state() {
+    saved_buttons_state = keys_config.get_key_cfgs();
+}
+
+void TimeTracker::restore_buttons_state() {
+    disable_all_leds();
+    for (uint id = 0; id < saved_buttons_state.size(); ++id) {
+        const auto& button = saved_buttons_state[id];
+        if (button.enabled)
+            led_enable(id, button.color);
+    }
+    saved_buttons_state = {};
+}
+
+bool TimeTracker::is_next_slot_empty() const {
+    SessionId next_session = data.active_session + 1;
+    if (next_session >= MAX_TIME_TRACKER_ENTRIES_COUNT) {
+        next_session = 0;
+    }
+    auto& entry = data.tracking_entries[next_session];
+    return ((entry.tracking_meetings == 0) && (entry.tracking_work == 0));
+}
+
 void TimeTracker::handle_key_0_press(auto& entry, const bool is_long_press) {
     if (!is_long_press) {
+        if (awaiting_confirmation) {
+            /* Cancel moving to next session */
+            awaiting_confirmation = false;
+            restore_buttons_state();
+            return;
+        }
+
         if (entry.tracking_work) {
             entry.tracking_work = false;
             led_disable(WORK_TRACKING_KEY_ID);
@@ -163,6 +193,9 @@ void TimeTracker::handle_key_0_press(auto& entry, const bool is_long_press) {
 }
 
 void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
+    if (awaiting_confirmation) {
+        return;
+    }
     if (!is_long_press) {
         if (entry.tracking_meetings) {
             entry.tracking_meetings = false;
@@ -182,7 +215,7 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
             LED 0 - tens part
             LED 1 - ones part
         */
-        const std::vector<ButtonConfig> buttons = keys_config.get_key_cfgs();
+        save_buttons_state();
         disable_all_leds();
 
         const uint session_id           = data.active_session;
@@ -192,25 +225,34 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
         led_blink(WORK_TRACKING_KEY_ID, led_blink_period, led_0, Color::Green);
         led_blink(MEETING_TRACKING_KEY_ID, led_blink_period, led_1, Color::Green);
 
-        for (uint id = 0; id < buttons.size(); ++id) {
-            const auto& button = buttons[id];
-            if (button.enabled)
-                led_enable(id, button.color);
-        }
+        restore_buttons_state();
     }
 }
 
 void TimeTracker::handle_key_2_press(const bool is_long_press) {
     Color color = get_key_color_info(FUNCTION_KEY_ID)->color;
     if (is_long_press) {
-        stop_tracking();
-        led_disable(FUNCTION_KEY_ID);
+        if (awaiting_confirmation)
+            return;
+        if (!is_next_slot_empty()) {
+            /* Wait for next session confirmation */
+            awaiting_confirmation = true;
+            save_buttons_state();
+            disable_all_leds();
+            led_enable(WORK_TRACKING_KEY_ID, Color::Red);
+            led_enable(FUNCTION_KEY_ID, Color::Green);
+            return;
+        }
 
         move_to_next_session();
-        initialize_new_session();
-
-        next_session_animation(color);
     } else {
+        if (awaiting_confirmation) {
+            /* Confirm moving to next session */
+            awaiting_confirmation = false;
+            move_to_next_session();
+            return;
+        }
+
         if (!is_any_threshold_reached()) {
             /* Tracked hours indicator */
             const uint hours = get_hours_tracked();
@@ -235,11 +277,17 @@ void TimeTracker::initialize_new_session() {
     entry.long_threshold_reached   = false;
 }
 
-void TimeTracker::move_to_next_session() {
+void TimeTracker::move_to_next_session(bool animate) {
     if (data.active_session < (MAX_TIME_TRACKER_ENTRIES_COUNT - 1)) {
         data.active_session++;
     } else {
         data.active_session = 0;
+    }
+    stop_tracking();
+    disable_all_leds();
+    initialize_new_session();
+    if (animate) {
+        next_session_animation(Color::Green);
     }
 }
 
@@ -322,8 +370,7 @@ FeatureCmdResult TimeTracker::get_cmd(const FeatureCommand& command) const {
 
 FeatureCmdStatus TimeTracker::set_cmd(const FeatureCommand& command) {
     if (std::holds_alternative<NewTimeTrackerSessionCmd>(command)) {
-        move_to_next_session();
-        initialize_new_session();
+        move_to_next_session(false);
         return FeatureCmdStatus::SUCCESS;
     } else if (std::holds_alternative<SetTimeTrackerMediumThresholdCmd>(command)) {
         const auto threshold_ms = std::get<SetTimeTrackerMediumThresholdCmd>(command).threshold_ms;

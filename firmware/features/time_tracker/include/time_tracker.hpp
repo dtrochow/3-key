@@ -28,6 +28,7 @@
 #include <optional>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "pico/stdlib.h"
 
@@ -45,7 +46,9 @@ class TimeTracker : public Feature {
     TimeTrackerData_t data;
     Storage& storage;
     Time& time;
-    uint intervals_count = 0;
+    uint intervals_count       = 0;
+    bool awaiting_confirmation = false;
+    std::vector<ButtonConfig> saved_buttons_state{};
 
     // Map to store key ID -> KeyColorInfo
     std::unordered_map<uint, KeyColorInfo> key_color_map;
@@ -73,13 +76,16 @@ class TimeTracker : public Feature {
     void factory_init();
     bool is_factory_required() const;
     bool is_date_empty(DateTime_t& date_time) const;
-    void move_to_next_session();
+    void move_to_next_session(bool animate = true);
     void initialize_new_session();
     void stop_tracking();
     void save_tracking_data() { storage.save_blob(BlobType::TIME_TRACKER_DATA, data); };
     bool is_time_to_save() const { return (intervals_count >= SAVE_INTERVALS_COUNT); }
     void increment_intervals_count() { intervals_count++; }
     void zero_intervals_count() { intervals_count = 0; }
+    bool is_next_slot_empty() const;
+    void save_buttons_state();
+    void restore_buttons_state();
 
     bool is_any_threshold_reached() const {
         const auto& entry = data.tracking_entries[data.active_session];
