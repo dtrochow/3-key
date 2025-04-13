@@ -49,6 +49,7 @@ class TimeTracker : public Feature {
     uint intervals_count       = 0;
     bool awaiting_confirmation = false;
     std::vector<ButtonConfig> saved_buttons_state{};
+    TrackingType previous_tracking_type = TrackingType::NONE;
 
     // Map to store key ID -> KeyColorInfo
     std::unordered_map<uint, KeyColorInfo> key_color_map;
@@ -79,6 +80,7 @@ class TimeTracker : public Feature {
     void move_to_next_session(bool animate = true);
     void initialize_new_session();
     void stop_tracking();
+    void resume_tracking();
     void save_tracking_data() { storage.save_blob(BlobType::TIME_TRACKER_DATA, data); };
     bool is_time_to_save() const { return (intervals_count >= SAVE_INTERVALS_COUNT); }
     void increment_intervals_count() { intervals_count++; }
