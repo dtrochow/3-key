@@ -48,7 +48,7 @@ Time::~Time() = default;
 uint64_t Time::get_current_time_us() const {
     const uint64_t current_time_us = get_absolute_time();
     const uint64_t elapsed_time_us = (current_time_us - synced_device_time_us);
-    return (synced_time_us + elapsed_time_us);
+    return ((synced_time_us == 0) ? (0) : (synced_time_us + elapsed_time_us));
 }
 
 uint64_t Time::get_current_time_ms() const {
