@@ -189,13 +189,13 @@ bool TextMode::handle_feature_cmd(const std::vector<std::string>& params) {
 }
 
 bool TextMode::handle_time_cmd(const std::vector<std::string>& params) {
-    if (params.size() < 1) {
-        add_log("Error: 1 argument required");
+    if (f_handler.get_current_feature() != FeatureType::TIME_TRACKER) {
+        add_log("Time-Tracker feature is disabled");
         return false;
     }
 
-    if (f_handler.get_current_feature() != FeatureType::TIME_TRACKER) {
-        add_log("Time-Tracker feature is disabled");
+    if (params.size() < 1) {
+        add_log("Error: 1 argument required");
         return false;
     }
 
