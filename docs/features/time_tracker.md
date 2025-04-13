@@ -16,6 +16,30 @@ The `TimeTracker` helps track work and meeting times using three buttons with vi
 
 ## How to Use
 
+### How to enable time-tracker feature
+
+To enable the time-tracker feature follow these steps:
+
+1. Connect to text 3-key terminal:
+
+    ```bash
+    python tools/connect_serial.py
+    ```
+
+2. Run following command:
+
+    ```bash
+    3-key>feature time-tracker
+    Feature enabled: time-tracker
+    ```
+
+3. To check if the feature is enabled you can run:
+
+    ```bash
+    3-key>feature
+    Current feature: time-tracker
+    ```
+
 ### Buttons and Their Functions
 
 - **Button 1 (Work Tracking)**:  
@@ -26,9 +50,6 @@ The `TimeTracker` helps track work and meeting times using three buttons with vi
         - Stops work time tracking if enabled.
     - LED behavior:
         - Lights purple while working.
-        - Lights orange when total tracked time (work + meetings) is 6 hours or more.
-        - Lights red when total tracked time is more than 7.5 hours.
-        - Blinks red when total tracked time is more than 8 hours.
 
 - **Button 2 (Meeting Tracking)**:  
    Toggles **Meeting Tracking**
@@ -38,17 +59,25 @@ The `TimeTracker` helps track work and meeting times using three buttons with vi
         - Stops meeting time tracking if enabled.
     - LED behavior:
         - Lights cyan when meetings are being tracked.
-        - Lights orange when total tracked time (work + meetings) is 6 hours or more.
-        - Lights red when total tracked time is more than 7.5 hours.
-        - Blinks red when total tracked time is more than 8 hours.
+    - Long press:
+        - The device will show the user the current Session ID value.
+            - It blinks LED 0 the number of times equivalent to the tens digit of the Session ID value.
+            - It blinks LED 1 the number of times equivalent to the ones digit of the Session ID value.
 
 - **Button 3 (Session Management)**:
    Manages tracking sessions.
     - Short press:
-        - Blinks blue LED X times, where X is the number of tracked hours.
+        - Blinks green LED X times, where X is the number of tracked hours.
     - Long press:
         - Switches to the next tracking slot/context.
-        - Lights up all LEDs sequentially in green (LED 1 -> 1s -> LED 2 -> 1s -> LED 3).
+        - Triggers the next session animation.
+    - LED behavior
+        - Lights yellow when total tracked time (work + meetings) is greater then medium threshold value.
+        - Lights red when total tracked time is more than long threshold value.
+
+!!! warning "Confirmation prompt when switching to next session"
+    When the next session slot is not empty, the user will be asked to confirm the next session operation.
+    Pressing the green button will confirm the operation, while pressing the red button will cancel it and resume tracking if it was previously enabled.
 
 !!! note "Session Management - Number of tracked hours"
     It will blink once until the second hour has passed.
@@ -106,15 +135,15 @@ Session2 -[dashed]-> SessionN : Long press on Button 3
 SessionN --> Session1 : Long press on Button 3 (Cycle back to first session)
 
 state Session1 {
-    Session1 : LED Green (LED 1 -> 1s -> LED 2 -> 1s -> LED 3)
+    Session1 : LED Green (Next Session Animation)
 }
 
 state Session2 {
-    Session2 : LED Green (LED 1 -> 1s -> LED 2 -> 1s -> LED 3)
+    Session2 : LED Green (Next Session Animation)
 }
 
 state SessionN {
-    SessionN : LED Green (LED 1 -> 1s -> LED 2 -> 1s -> LED 3)
+    SessionN : LED Green (Next Session Animation)
 }
 
 @enduml
@@ -131,52 +160,62 @@ state SessionN {
 
 To review your tracked time, the `TimeTracker` provides logs that can be generated and displayed in the serial terminal:
 
-1. **Work Time Log**:  
-   Displays the total time spent on work in the current session.  
-   Example Output:  
-   `2025-01-26 Work: 2h 15min 30s`
+1. **Work Time Log**:
 
-2. **Meeting Time Log**:  
-   Displays the total time spent on meetings in the current session.  
-   Example Output:  
-   `2025-01-26 Meetings: 1h 45min 15s`
+    ```bash
+    3-key>time work
+    ```
+
+    Displays the total time spent on work in the current session.  
+    Example Output:
+    `2025-01-26 Work: 2h 15min 30s`
+
+2. **Meeting Time Log**:
+
+    ```bash
+    3-key>time meetings
+    ```
+
+    Displays the total time spent on meetings in the current session.  
+    Example Output:
+    `2025-01-26 Meetings: 1h 45min 15s`
+
+!!!note "Time synchronization"
+    When the time is not synced to the host time, the reported time will default to the epoch start: `01.01.1970 00:00:00`
 
 ### Report via script
 
-The `time_report.py` script is able to retrieve the report from the 3-key keyboard.
-The command that needs to be send to the device is described in terminal section.
+The `time_report.py` script retrieves detailed reports from the 3-key keyboard. The command to interact with the device is described in the terminal section.
 
-Script has the following parameters:
+The script supports the following commands:
 
-- `-s` - session ID (default current session)
+- `sync_time`  
+  Synchronizes the device's time with the host system's current time.
 
-The script will print the following things:
+- `get_time_report`  
+  Retrieves a detailed time report for the current session or a specific session ID.  
+  Example usage:  
+  ```bash
+  python tools/time_report.py get_time_report --session_id 1
+  ```
 
-- Day, month and year
-- Time spent on working (meetings + other work)
-- Time spend on meeting only
-- Time spent on other work
-- Start of tracking (first tracker enable in session)
-- End of tracking (last tracker disable in session)
+- `get_current_session_id`  
+  Retrieves the ID of the currently active session.
+
+- `new_session`  
+  Starts a new session, cycling to the next available session slot.
+
+- `set_threshold`  
+  Sets the medium or long threshold for tracked time.  
+  Example usage:  
+  ```bash
+  python tools/time_report.py set_threshold medium 3,30
+  ```  
+  The above command sets the medium threshold to 3 hours and 30 minutes.
+
+The script provides flexibility to retrieve and format session data for analysis or record-keeping.
 
 ---
-
-## Driver
-
-The driver for 3-key device has only a single purpose for now. Sending the current time to the device from host when the device is being connected to host.
-
-### Operating systems
-
-| OS        | Support |
-|-----------|---------|
-| Linux     | ❌      |
-| Windows   | ❌      |
-| macOS     | ✔️      |
-
-### Installation
-
-There is an install.py script in each drivers folder, which performs the installation of the driver from the latest driver release.
-You can also choose to build and install the driver yourself by providing the path to the built driver using the -d parameter.
 
 ## Additional Notes
 

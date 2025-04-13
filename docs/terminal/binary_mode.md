@@ -82,8 +82,70 @@ Synchronizes the device's internal time with the provided timestamp.
     - **Bytes 0–7**: Timestamp in microseconds (64-bit, little-endian).
 
 - **Response**
-    - **Success**: The device sets its internal time and returns a success response
-    - **Failure**: Returns an error status if the payload is invalid or the command type is unsupported
+    - **Success**: The device sets its internal time and returns a success response.
+    - **Failure**: Returns an error status if the payload is invalid or the command type is unsupported.
+
+### 2. `GET_TIME_REPORT`
+Retrieves a detailed time tracking report for a specific session.
+
+- **Command Type**: `READ`
+- **Command ID**: `0x02`
+- **Payload**:
+    - **Bytes 0–3**: Session ID (32-bit, little-endian). Use `0xFFFFFFFF` to retrieve the latest session.
+
+- **Response**
+    - **Success**: Returns a `TimeTrackingEntry` structure containing:
+        - Start time of the session.
+        - Total work time and meeting time in microseconds.
+        - Flags indicating whether thresholds were reached.
+        - Date and time of the session.
+    - **Failure**: Returns an error status if the session ID is invalid or the command type is unsupported.
+
+### 3. `GET_TIME_SESSION_ID`
+Retrieves the current active session ID.
+
+- **Command Type**: `READ`
+- **Command ID**: `0x03`
+- **Payload**: None.
+
+- **Response**
+    - **Success**: Returns the current active session ID as a 32-bit integer.
+    - **Failure**: Returns an error status if the command type is unsupported.
+
+### 4. `TIME_NEW_SESSION`
+Starts a new time tracking session by moving to the next available session slot.
+
+- **Command Type**: `WRITE`
+- **Command ID**: `0x04`
+- **Payload**: None.
+
+- **Response**
+    - **Success**: A new session is started, and the device returns a success response.
+    - **Failure**: Returns an error status if the command type is unsupported or if the session cannot be created.
+
+### 5. `TIME_SET_MEDIUM_THRESHOLD`
+Sets the medium threshold for time tracking. This threshold triggers a specific action (e.g., LED indication) when the total tracked time exceeds the threshold.
+
+- **Command Type**: `WRITE`
+- **Command ID**: `0x05`
+- **Payload**:
+    - **Bytes 0–3**: Medium threshold in milliseconds (32-bit, little-endian).
+
+- **Response**
+    - **Success**: The medium threshold is updated, and the device returns a success response.
+    - **Failure**: Returns an error status if the payload is invalid or the command type is unsupported.
+
+### 6. `TIME_SET_LONG_THRESHOLD`
+Sets the long threshold for time tracking. This threshold triggers a specific action (e.g., LED indication) when the total tracked time exceeds the threshold.
+
+- **Command Type**: `WRITE`
+- **Command ID**: `0x06`
+- **Payload**:
+    - **Bytes 0–3**: Long threshold in milliseconds (32-bit, little-endian).
+
+- **Response**
+    - **Success**: The long threshold is updated, and the device returns a success response.
+    - **Failure**: Returns an error status if the payload is invalid or the command type is unsupported.
 
 ## Example Workflow
 
