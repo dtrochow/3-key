@@ -50,6 +50,12 @@ enum class TimeTrackerCommand : uint8_t {
     GET_TIME_TRACKER_ENTRY = 0,
 };
 
+enum class TrackingType : uint8_t {
+    WORK_TRACKING    = 0,
+    MEETING_TRACKING = 1,
+    NONE             = 2,
+};
+
 constexpr uint WORK_TRACKING_KEY_ID    = 0;
 constexpr uint MEETING_TRACKING_KEY_ID = 1;
 constexpr uint FUNCTION_KEY_ID         = 2;

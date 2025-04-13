@@ -119,13 +119,29 @@ bool TimeTracker::is_factory_required() const {
 }
 
 void TimeTracker::stop_tracking() {
-    auto& entry = data.tracking_entries[data.active_session];
+    previous_tracking_type = TrackingType::NONE;
+    auto& entry            = data.tracking_entries[data.active_session];
     if (entry.tracking_work) {
-        entry.tracking_work = false;
+        entry.tracking_work    = false;
+        previous_tracking_type = TrackingType::WORK_TRACKING;
         led_disable(WORK_TRACKING_KEY_ID);
     } else if (entry.tracking_meetings) {
         entry.tracking_meetings = false;
+        previous_tracking_type  = TrackingType::MEETING_TRACKING;
         led_disable(MEETING_TRACKING_KEY_ID);
+    }
+}
+
+void TimeTracker::resume_tracking() {
+    auto& entry = data.tracking_entries[data.active_session];
+    if (previous_tracking_type == TrackingType::WORK_TRACKING) {
+        entry.tracking_work = true;
+        const Color color   = get_key_color_info(WORK_TRACKING_KEY_ID)->color;
+        led_enable(WORK_TRACKING_KEY_ID, color);
+    } else if (previous_tracking_type == TrackingType::MEETING_TRACKING) {
+        entry.tracking_meetings = true;
+        const Color color       = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
+        led_enable(MEETING_TRACKING_KEY_ID, color);
     }
 }
 
@@ -174,6 +190,7 @@ void TimeTracker::handle_key_0_press(auto& entry, const bool is_long_press) {
             /* Cancel moving to next session */
             awaiting_confirmation = false;
             restore_buttons_state();
+            resume_tracking();
             return;
         }
 
@@ -186,7 +203,7 @@ void TimeTracker::handle_key_0_press(auto& entry, const bool is_long_press) {
                 led_disable(MEETING_TRACKING_KEY_ID);
             }
             entry.tracking_work = true;
-            Color color         = get_key_color_info(WORK_TRACKING_KEY_ID)->color;
+            const Color color   = get_key_color_info(WORK_TRACKING_KEY_ID)->color;
             led_enable(WORK_TRACKING_KEY_ID, color);
         }
     }
@@ -206,7 +223,7 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
                 led_disable(WORK_TRACKING_KEY_ID);
             }
             entry.tracking_meetings = true;
-            Color color             = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
+            const Color color       = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
             led_enable(MEETING_TRACKING_KEY_ID, color);
         }
     } else {
@@ -239,6 +256,7 @@ void TimeTracker::handle_key_2_press(const bool is_long_press) {
             awaiting_confirmation = true;
             save_buttons_state();
             disable_all_leds();
+            stop_tracking();
             led_enable(WORK_TRACKING_KEY_ID, Color::Red);
             led_enable(FUNCTION_KEY_ID, Color::Green);
             return;
