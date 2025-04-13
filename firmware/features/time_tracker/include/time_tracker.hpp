@@ -56,7 +56,7 @@ class TimeTracker : public Feature {
 
     void initialize_key_color_map() {
         key_color_map[WORK_TRACKING_KEY_ID]    = { Key::NONE, Color::Purple };
-        key_color_map[MEETING_TRACKING_KEY_ID] = { Key::NONE, Color::Blue };
+        key_color_map[MEETING_TRACKING_KEY_ID] = { Key::NONE, Color::Cyan };
         key_color_map[FUNCTION_KEY_ID]         = { Key::NONE, Color::Green };
     }
 

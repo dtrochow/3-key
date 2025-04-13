@@ -48,7 +48,22 @@ Erases all data in flash storage.
 
 ---
 
-### 3. `change_color`
+### 3. `factory_init`
+Initializes all features to their factory default settings.
+
+**Usage**
+```bash
+3-key>factory_init
+```
+
+**Description**
+
+- Resets all features to their default state
+- Logs a success message upon completion
+
+---
+
+### 4. `change_color`
 Changes the color of a specific button.
 
 **Usage**
@@ -68,12 +83,12 @@ Changes the color of a specific button.
 
 **Description**
 
-- Changes the color of the button identified by <button_id> to the specified <color>
+- Changes the color of the button identified by `<button_id>` to the specified `<color>`
 - Logs an error message if the button ID or color is invalid
 
 ---
 
-### 4. `feature`
+### 5. `feature`
 Enables or switches to a specific feature.
 
 **Usage**
@@ -101,7 +116,7 @@ Enables or switches to a specific feature.
 
 ---
 
-### 5. `time`
+### 6. `time`
 Fetches time-tracking logs for different categories.
 
 **Usage**
@@ -114,6 +129,7 @@ Fetches time-tracking logs for different categories.
 - `<category>`: Time log category. Supported values:
     - `work`: Fetches work time logs
     - `meetings`: Fetches meeting time logs
+    - `session`: Fetches the current session ID
 
 **Example**
 ```bash
@@ -127,7 +143,7 @@ Fetches time-tracking logs for different categories.
 
 ---
 
-### 6. `long_press_ms`
+### 7. `long_press_ms`
 Sets the buttons long press delay value in milliseconds.
 
 **Usage**
