@@ -30,7 +30,7 @@
 
 class Leds {
   public:
-    Leds(uint leds_count, KeysConfig& keys, PIO pio = pio0, uint pin = DEFAULT_LED_PIN, float freq = DEFAULT_FREQ);
+    Leds(uint leds_count, KeysConfig& keys, PIO pio = pio0, uint pin = kDefaultLedPin, float freq = kDefaultFreq);
     ~Leds() = default;
 
   private:
@@ -53,7 +53,7 @@ class Leds {
     void refresh() const;
     void enable_all(bool r = false);
     void disable_all(bool r = false);
-    LedsMode mode() const;
+    LedsMode_e mode() const;
     void update_led_states();
 
   private:

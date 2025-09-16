@@ -24,43 +24,41 @@
 #include "buttons.hpp"
 #include "pico/stdlib.h"
 #include "time.hpp"
+#include <cstdint>
 
-#define MICROSECONDS_IN_SECOND_COUNT 1'000'000UL
-#define SECONDS_IN_HOUR_COUNT 3600UL
-#define MICROSECONDS_IN_MILISECOND_COUNT 1'000UL
-#define MILLISECONDS_IN_SECOND_COUNT 1'000UL
-#define SECONDS_IN_MINUTE_COUNT 60UL
+inline constexpr uint64_t kMicrosecondsInSecondCount      = 1'000'000UL;
+inline constexpr uint64_t kSecondsInHourCount             = 3600UL;
+inline constexpr uint64_t kMicrosecondsInMillisecondCount = 1'000UL;
+inline constexpr uint64_t kMillisecondsInSecondCount      = 1'000UL;
+inline constexpr uint64_t kSecondsInMinuteCount           = 60UL;
 
-#define TRACING_TIMER_INTERVAL_MS 250UL
-#define MAX_TIME_TRACKER_ENTRIES_COUNT 31
-#define SAVE_INTERVALS_COUNT 16
+inline constexpr uint32_t kTracingTimerIntervalMs = 250UL;
+inline constexpr uint kMaxTimeTrackerEntriesCount = 31;
+inline constexpr uint kSaveIntervalsCount         = 16;
 
-#define MEDIUM_THRESHOLD_MS_DEFAULT (6 * SECONDS_IN_HOUR_COUNT * MILLISECONDS_IN_SECOND_COUNT)
-#define LONG_THRESHOLD_MS_DEFAULT (7.5 * SECONDS_IN_HOUR_COUNT * MILLISECONDS_IN_SECOND_COUNT)
+inline constexpr uint64_t kMediumThresholdMsDefault = (6 * kSecondsInHourCount * kMillisecondsInSecondCount);
+inline constexpr uint64_t kLongThresholdMsDefault =
+    static_cast<uint64_t>(7.5 * kSecondsInHourCount * kMillisecondsInSecondCount);
+
+inline constexpr uint kWorkTrackingKeyId    = 0;
+inline constexpr uint kMeetingTrackingKeyId = 1;
+inline constexpr uint kFunctionKeyId        = 2;
 
 using SessionId = uint;
 
-enum class TimeTrackerLog : uint {
-    CURRENT_WORK_TIME_REPORT     = 0,
-    CURRENT_MEETINGS_TIME_REPORT = 1,
-    CURRENT_SESSION_ID           = 2,
+enum class TimeTrackerLog_e : uint {
+    CurrentWorkTimeReport     = 0,
+    CurrentMeetingsTimeReport = 1,
+    CurrentSessionId          = 2,
 };
 
-enum class TimeTrackerCommand : uint8_t {
-    GET_TIME_TRACKER_ENTRY = 0,
+enum class TrackingType_e : uint8_t {
+    WorkTracking    = 0,
+    MeetingTracking = 1,
+    None            = 2,
 };
 
-enum class TrackingType : uint8_t {
-    WORK_TRACKING    = 0,
-    MEETING_TRACKING = 1,
-    NONE             = 2,
-};
-
-constexpr uint WORK_TRACKING_KEY_ID    = 0;
-constexpr uint MEETING_TRACKING_KEY_ID = 1;
-constexpr uint FUNCTION_KEY_ID         = 2;
-
-typedef struct {
+struct TimeTrackingEntry_t {
     uint64_t start_time_us;
     uint64_t work_time_us;
     uint64_t meeting_time_us;
@@ -69,17 +67,17 @@ typedef struct {
     bool medium_threshold_reached;
     bool long_threshold_reached;
     DateTime_t tracking_date;
-} TimeTrackingEntry_t;
-
-struct KeyColorInfo {
-    Key key;
-    Color color;
 };
 
-typedef struct {
+struct KeyColorInfo {
+    Key_e key;
+    Color_e color;
+};
+
+struct TimeTrackerData_t {
     uint32_t magic;
-    TimeTrackingEntry_t tracking_entries[MAX_TIME_TRACKER_ENTRIES_COUNT];
+    TimeTrackingEntry_t tracking_entries[kMaxTimeTrackerEntriesCount];
     SessionId active_session;
     uint64_t medium_threshold_ms;
     uint64_t long_threshold_ms;
-} TimeTrackerData_t;
+};

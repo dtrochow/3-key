@@ -74,7 +74,7 @@ Changes the color of a specific button.
 **Parameters**
 
 - `<button_id>`: Numeric ID of the button (must be a valid button ID)
-- `<color>`: Color name (red, green, or blue)
+- `<color>`: Color_e name (red, green, or blue)
 
 **Example**
 ```bash

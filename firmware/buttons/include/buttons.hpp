@@ -29,7 +29,7 @@
 #include "buttons_config.hpp"
 #include "keys_config.hpp"
 
-constexpr uint DEBOUNCE_DELAY_MS = 100;
+inline constexpr uint kDebounceDelayMs = 100;
 
 typedef struct {
     bool is_debouncing;
@@ -41,19 +41,14 @@ typedef struct {
     uint long_press_start_time;
 } ButtonState_t;
 
-/* TODO: Make Buttons class Singleton */
 class Buttons {
   public:
     explicit Buttons(KeysConfig& keys);
     ~Buttons() = default;
 
-  private:
-    KeysConfig& keys;
-
-  public:
     void init();
     bool is_btn_pressed(const Button& btn) const;
-    Key get_pressed_key() const;
+    Key_e get_pressed_key() const;
     uint get_pressed_key_id() const;
     uint8_t get_modifier_flags() const;
     uint get_btn_id(const Button& btn) const;
@@ -64,4 +59,7 @@ class Buttons {
     std::optional<ButtonState_t> get_pending_button();
 
     void set_long_press_delay(uint delay_ms);
+
+  private:
+    KeysConfig& keys;
 };

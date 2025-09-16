@@ -33,14 +33,14 @@
 #include "time.hpp"
 
 class Terminal {
-  private:
-    bool is_binary_mode;
-    TextMode text_mode;
-    BinaryMode binary_mode;
-
   public:
     Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler, Time& time);
     ~Terminal() = default;
 
     std::span<uint8_t> terminal(char byte);
+
+  private:
+    bool is_binary_mode;
+    TextMode text_mode;
+    BinaryMode binary_mode;
 };

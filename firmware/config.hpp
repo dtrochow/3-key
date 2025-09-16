@@ -21,6 +21,8 @@
 
 #pragma once
 
-#define BUTTON_LEFT_GPIO 14
-#define BUTTON_MIDDLE_GPIO 13
-#define BUTTON_RIGHT_GPIO 12
+#include <cstdint>
+
+inline constexpr uint kButtonLeftGpio   = 14;
+inline constexpr uint kButtonMiddleGpio = 13;
+inline constexpr uint kButtonRightGpio  = 12;

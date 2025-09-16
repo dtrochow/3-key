@@ -34,10 +34,9 @@
 #include "time.hpp"
 #include "tud.hpp"
 
-Leds* g_leds       = nullptr;
-Buttons* g_buttons = nullptr;
-
-mutex_t g_mutex;
+static Leds* g_leds       = nullptr;
+static Buttons* g_buttons = nullptr;
+static mutex_t g_mutex{};
 
 void leds_task_on_core1() {
     while (1) {
@@ -50,9 +49,9 @@ void leds_task_on_core1() {
 
 int main(void) {
     const std::vector<ButtonConfig> key_configs = {
-        { 0, BUTTON_RIGHT_GPIO, Key::V, Color::Red, true },
-        { 1, BUTTON_MIDDLE_GPIO, Key::C, Color::Green, true },
-        { 2, BUTTON_LEFT_GPIO, Modifier::LEFT_CMD, Color::Blue, true },
+        { 0, kButtonRightGpio, Key_e::V, Color_e::Red, true },
+        { 1, kButtonMiddleGpio, Key_e::C, Color_e::Green, true },
+        { 2, kButtonLeftGpio, Modifier_e::LeftCmd, Color_e::Blue, true },
     };
 
     mutex_init(&g_mutex);

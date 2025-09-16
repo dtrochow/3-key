@@ -23,13 +23,14 @@
 #include "keys_config.hpp"
 #include "tusb.h"
 #include "usb_descriptors.h"
+#include <cstdint>
 
 void CtrlCVFeature::init() {
     const std::vector<KeyConfigTableEntry_t> keys = {
         /* key_id key_value color */
-        { 0, Key::V, Color::Red },
-        { 1, Key::C, Color::Green },
-        { 2, Modifier::LEFT_CMD, Color::Blue },
+        { 0, Key_e::V, Color_e::Red },
+        { 1, Key_e::C, Color_e::Green },
+        { 2, Modifier_e::LeftCmd, Color_e::Blue },
     };
 
     for (const auto& entry : keys) {
@@ -37,7 +38,7 @@ void CtrlCVFeature::init() {
         keys_config.set_key_value(entry.key_id, entry.key);
     }
 
-    keys_config.switch_leds_mode(LedsMode::WHEN_BUTTON_PRESSED);
+    keys_config.switch_leds_mode(LedsMode_e::WhenButtonPressed);
 }
 
 void CtrlCVFeature::send_keys(const uint8_t key, const Buttons& buttons) {
@@ -59,7 +60,7 @@ void CtrlCVFeature::send_keys(const uint8_t key, const Buttons& buttons) {
 }
 
 void CtrlCVFeature::handle(Buttons& buttons) {
-    const uint8_t key = buttons.get_pressed_key();
+    const uint8_t key = static_cast<uint8_t>(buttons.get_pressed_key());
     send_keys(key, buttons);
 }
 

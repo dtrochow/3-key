@@ -45,12 +45,12 @@ class Feature {
 
     virtual FeatureCmdResult get_cmd(const FeatureCommand& command) const {
         (void)command;
-        return { FeatureCmdStatus::GET_COMMAND_UNSUPPORTED, std::monostate{} };
+        return { FeatureCmdStatus_e::GetCommandUnsupported, std::monostate{} };
     }
 
-    virtual FeatureCmdStatus set_cmd(const FeatureCommand& command) {
+    virtual FeatureCmdStatus_e set_cmd(const FeatureCommand& command) {
         (void)command;
-        return FeatureCmdStatus::SET_COMMAND_UNSUPPORTED;
+        return FeatureCmdStatus_e::SetCommandUnsupported;
     }
 
   protected:
@@ -65,19 +65,19 @@ class FeaturesHandler {
     void init();
     void factory_init();
     void factory_init_features();
-    void switch_to_feature(FeatureType type);
+    void switch_to_feature(FeatureType_e type);
     void handle(Buttons& buttons);
-    std::string get_feature_log(FeatureType f_type, uint log_id) const;
-    FeatureType get_current_feature() const;
+    std::string get_feature_log(FeatureType_e f_type, uint log_id) const;
+    FeatureType_e get_current_feature() const;
     std::string get_current_feature_name() const;
 
-    FeatureCmdResult get_cmd(FeatureType f_type, const FeatureCommand& command) const;
-    FeatureCmdStatus set_cmd(FeatureType f_type, const FeatureCommand& command) const;
+    FeatureCmdResult get_cmd(FeatureType_e f_type, const FeatureCommand& command) const;
+    FeatureCmdStatus_e set_cmd(FeatureType_e f_type, const FeatureCommand& command) const;
 
   private:
     FeaturesHandlerConfig_t config;
     Storage& storage;
-    std::unordered_map<FeatureType, std::unique_ptr<Feature>> features;
+    std::unordered_map<FeatureType_e, std::unique_ptr<Feature>> features;
     KeysConfig& keys_config;
     Time& time;
 

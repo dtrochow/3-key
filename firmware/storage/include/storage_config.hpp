@@ -23,24 +23,24 @@
 
 #include "hardware/flash.h"
 
-#define BLOB_SLOTS_COUNT 16
-#define BLOB_SLOT_SIZE_BYTES 2048
-#define BLOB_MAGIC 0xDEADBEEF
+inline constexpr uint32_t kBlobSlotsCount    = 16;
+inline constexpr uint32_t kBlobSlotSizeBytes = 2048;
+inline constexpr uint32_t kBlobMagicNumber   = 0xDEADBEEF;
 
-#define STORAGE_SIZE (BLOB_SLOTS_COUNT * BLOB_SLOT_SIZE_BYTES)
-static_assert((STORAGE_SIZE % FLASH_SECTOR_SIZE) == 0, "The size of the storage must be multiple of sector size.");
+inline constexpr uint32_t kStorageSize = (kBlobSlotsCount * kBlobSlotSizeBytes);
+static_assert((kStorageSize % FLASH_SECTOR_SIZE) == 0, "The size of the storage must be multiple of sector size.");
 
-#define STORAGE_FLASH_OFFSET (PICO_FLASH_SIZE_BYTES - STORAGE_SIZE)
+inline constexpr uintptr_t kStorageFlashOffset = (PICO_FLASH_SIZE_BYTES - kStorageSize);
 
-typedef struct {
+struct StorageConfig_t {
     uint32_t magic;
     uint32_t init_count;
-} StorageConfig_t;
+};
 
-enum class BlobType : uint {
-    STORAGE_CONFIG,
-    FEATURES_HANDLER_CONFIG,
-    KEYS_CONFIG,
-    TIME_TRACKER_DATA,
-    BLOBS_COUNT,
+enum class BlobType_e : uint {
+    StorageConfig,
+    FeaturesHandlerConfig,
+    KeysConfig,
+    TimeTrackerData,
+    BlobsCount,
 };

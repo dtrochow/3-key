@@ -28,13 +28,13 @@
 #include "time_tracker_types.hpp"
 
 
-enum class FeatureCmdStatus {
-    SUCCESS,
-    SET_COMMAND_UNSUPPORTED,
-    GET_COMMAND_UNSUPPORTED,
-    INVALID_PAYLOAD,
-    INVALID_COMMAND,
-    ERROR,
+enum class FeatureCmdStatus_e : uint8_t {
+    Success,
+    SetCommandUnsupported,
+    GetCommandUnsupported,
+    InvalidPayload,
+    InvalidCommand,
+    Error,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -44,11 +44,15 @@ enum class FeatureCmdStatus {
 struct GetTimeTrackerEntryCmd {
     uint32_t session_id;
 };
+
 struct GetTimeTrackerCurrentActiveSessionIdCmd {};
+
 struct NewTimeTrackerSessionCmd {};
+
 struct SetTimeTrackerMediumThresholdCmd {
     uint32_t threshold_ms;
 };
+
 struct SetTimeTrackerLongThresholdCmd {
     uint32_t threshold_ms;
 };
@@ -69,19 +73,19 @@ using FeatureCommand =
 
 // Define possible return types for get_cmd
 using FeatureCmdResultVariant = std::variant<std::monostate, TimeTrackingEntry_t, SessionId>;
-using FeatureCmdResult        = std::pair<FeatureCmdStatus, FeatureCmdResultVariant>;
+using FeatureCmdResult        = std::pair<FeatureCmdStatus_e, FeatureCmdResultVariant>;
 // clang-format on
 
 /* -------------------------------------------------------------------------- */
 
-enum class FeatureType {
-    CTRL_C_V,
-    TIME_TRACKER,
-    NONE,
+enum class FeatureType_e : uint8_t {
+    CtrlCV,
+    TimeTracker,
+    FeatureNone,
 };
 
-typedef struct {
+struct FeaturesHandlerConfig_t {
     uint32_t magic;
-    FeatureType current_feature;
+    FeatureType_e current_feature;
     bool is_feature_set;
-} FeaturesHandlerConfig_t;
+};

@@ -39,7 +39,7 @@ class TimeTracker : public Feature {
         initialize_key_color_map();
     }
     FeatureCmdResult get_cmd(const FeatureCommand& command) const override;
-    FeatureCmdStatus set_cmd(const FeatureCommand& command) override;
+    FeatureCmdStatus_e set_cmd(const FeatureCommand& command) override;
     void handle(Buttons& buttons);
 
   private:
@@ -49,15 +49,15 @@ class TimeTracker : public Feature {
     uint intervals_count       = 0;
     bool awaiting_confirmation = false;
     std::vector<ButtonConfig> saved_buttons_state{};
-    TrackingType previous_tracking_type = TrackingType::NONE;
+    TrackingType_e previous_tracking_type = TrackingType_e::None;
 
     // Map to store key ID -> KeyColorInfo
     std::unordered_map<uint, KeyColorInfo> key_color_map;
 
     void initialize_key_color_map() {
-        key_color_map[WORK_TRACKING_KEY_ID]    = { Key::NONE, Color::Purple };
-        key_color_map[MEETING_TRACKING_KEY_ID] = { Key::NONE, Color::Cyan };
-        key_color_map[FUNCTION_KEY_ID]         = { Key::NONE, Color::Green };
+        key_color_map[kWorkTrackingKeyId]    = { Key_e::KeyNone, Color_e::Purple };
+        key_color_map[kMeetingTrackingKeyId] = { Key_e::KeyNone, Color_e::Cyan };
+        key_color_map[kFunctionKeyId]        = { Key_e::KeyNone, Color_e::Green };
     }
 
     std::optional<KeyColorInfo> get_key_color_info(uint key_id) const {
@@ -81,8 +81,8 @@ class TimeTracker : public Feature {
     void initialize_new_session();
     void stop_tracking();
     void resume_tracking();
-    void save_tracking_data() { storage.save_blob(BlobType::TIME_TRACKER_DATA, data); };
-    bool is_time_to_save() const { return (intervals_count >= SAVE_INTERVALS_COUNT); }
+    void save_tracking_data() { storage.save_blob(BlobType_e::TimeTrackerData, data); };
+    bool is_time_to_save() const { return (intervals_count >= kSaveIntervalsCount); }
     void increment_intervals_count() { intervals_count++; }
     void zero_intervals_count() { intervals_count = 0; }
     bool is_next_slot_empty() const;
@@ -96,17 +96,17 @@ class TimeTracker : public Feature {
     void check_thresholds();
 
     static uint64_t get_milliseconds_tracked(const TimeTrackingEntry_t& entry) {
-        const uint64_t total_ms_work    = entry.work_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
-        const uint64_t total_ms_meeting = entry.meeting_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
+        const uint64_t total_ms_work    = (entry.work_time_us / kMicrosecondsInMillisecondCount);
+        const uint64_t total_ms_meeting = (entry.meeting_time_us / kMicrosecondsInMillisecondCount);
         return (total_ms_work + total_ms_meeting);
     }
     uint get_hours_tracked() const {
         const uint64_t total_ms_work =
-            data.tracking_entries[data.active_session].work_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
+            (data.tracking_entries[data.active_session].work_time_us / kMicrosecondsInMillisecondCount);
         const uint64_t total_ms_meeting =
-            data.tracking_entries[data.active_session].meeting_time_us / MICROSECONDS_IN_MILISECOND_COUNT;
+            (data.tracking_entries[data.active_session].meeting_time_us / kMicrosecondsInMillisecondCount);
         return static_cast<uint>(
-            (total_ms_work + total_ms_meeting) / (MILLISECONDS_IN_SECOND_COUNT * SECONDS_IN_HOUR_COUNT));
+            ((total_ms_work + total_ms_meeting) / (kMillisecondsInSecondCount * kSecondsInHourCount)));
     }
 
     static bool timer_callback(repeating_timer_t* timer);
@@ -121,9 +121,9 @@ class TimeTracker : public Feature {
     /* -------------------------------------------------------------------------- */
     /*                            Leds handling helpers                           */
     /* -------------------------------------------------------------------------- */
-    void set_color(uint key_id, Color color) { keys_config.set_key_color(key_id, color); };
-    void led_enable(uint key_id, Color color = Color::None) {
-        if (color != Color::None) {
+    void set_color(uint key_id, Color_e color) { keys_config.set_key_color(key_id, color); };
+    void led_enable(uint key_id, Color_e color = Color_e::None) {
+        if (color != Color_e::None) {
             keys_config.set_key_color(key_id, color);
         }
         keys_config.led_enable(key_id);
@@ -136,7 +136,7 @@ class TimeTracker : public Feature {
         }
     }
 
-    void next_session_animation(Color color) {
+    void next_session_animation(Color_e color) {
         constexpr uint DELAY_MS = 300;
         for (uint i = 0; i < keys_config.get_keys_count(); ++i) {
             led_enable(i, color);
@@ -145,8 +145,8 @@ class TimeTracker : public Feature {
         disable_all_leds();
     }
 
-    void led_blink(uint key_id, uint period, Color color = Color::None) {
-        if (color != Color::None) {
+    void led_blink(uint key_id, uint period, Color_e color = Color_e::None) {
+        if (color != Color_e::None) {
             keys_config.set_key_color(key_id, color);
         }
         const uint32_t sleep_time = static_cast<uint32_t>(period / 2);
@@ -156,8 +156,8 @@ class TimeTracker : public Feature {
         sleep_ms(sleep_time);
     };
 
-    void led_blink(uint key_id, uint period, uint count, Color color = Color::None) {
-        if (color != Color::None) {
+    void led_blink(uint key_id, uint period, uint count, Color_e color = Color_e::None) {
+        if (color != Color_e::None) {
             keys_config.set_key_color(key_id, color);
         }
         const uint32_t sleep_time = static_cast<uint32_t>(period / 2);

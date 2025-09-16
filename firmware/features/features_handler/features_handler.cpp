@@ -30,7 +30,7 @@ FeaturesHandler::FeaturesHandler(Storage& storage_, KeysConfig& keys_config_, Ti
 : storage(storage_), keys_config(keys_config_), time(time_) {}
 
 void FeaturesHandler::init() {
-    (void)storage.get_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
+    (void)storage.get_blob(BlobType_e::FeaturesHandlerConfig, config);
 
     initialize_features();
 
@@ -43,15 +43,15 @@ void FeaturesHandler::init() {
 }
 
 void FeaturesHandler::initialize_features() {
-    features[FeatureType::CTRL_C_V]     = std::make_unique<CtrlCVFeature>(keys_config);
-    features[FeatureType::TIME_TRACKER] = std::make_unique<TimeTracker>(keys_config, storage, time);
+    features[FeatureType_e::CtrlCV] = std::make_unique<CtrlCVFeature>(keys_config);
+    features[FeatureType_e::TimeTracker] = std::make_unique<TimeTracker>(keys_config, storage, time);
 }
 
 void FeaturesHandler::factory_init() {
-    config.magic = BLOB_MAGIC;
+    config.magic = kBlobMagicNumber;
     /* Setting default feature */
-    switch_to_feature(FeatureType::CTRL_C_V);
-    (void)storage.save_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
+    switch_to_feature(FeatureType_e::CtrlCV);
+    (void)storage.save_blob(BlobType_e::FeaturesHandlerConfig, config);
 }
 
 void FeaturesHandler::factory_init_features() {
@@ -62,10 +62,10 @@ void FeaturesHandler::factory_init_features() {
 }
 
 bool FeaturesHandler::is_factory_required() const {
-    return (config.magic != BLOB_MAGIC);
+    return (config.magic != kBlobMagicNumber);
 }
 
-void FeaturesHandler::switch_to_feature(FeatureType type) {
+void FeaturesHandler::switch_to_feature(FeatureType_e type) {
     FeaturesHandlerConfig_t conifg_cpy = config;
 
     if (config.is_feature_set) {
@@ -75,19 +75,19 @@ void FeaturesHandler::switch_to_feature(FeatureType type) {
         }
     }
 
-    config.is_feature_set  = (type == FeatureType::NONE) ? false : true;
+    config.is_feature_set  = (type == FeatureType_e::FeatureNone) ? false : true;
     config.current_feature = type;
 
     /* Feature not found */
-    if ((features.find(type) == features.end()) && (type != FeatureType::NONE)) {
+    if ((features.find(type) == features.end()) && (type != FeatureType_e::FeatureNone)) {
         config = conifg_cpy;
         return;
     }
 
-    if (type != FeatureType::NONE)
+    if (type != FeatureType_e::FeatureNone)
         features[type]->init();
 
-    (void)storage.save_blob(BlobType::FEATURES_HANDLER_CONFIG, config);
+    (void)storage.save_blob(BlobType_e::FeaturesHandlerConfig, config);
 }
 
 void FeaturesHandler::handle(Buttons& buttons) {
@@ -101,37 +101,37 @@ void FeaturesHandler::handle(Buttons& buttons) {
     it->second->handle(buttons);
 }
 
-std::string FeaturesHandler::get_feature_log(FeatureType f_type, uint log_id) const {
+std::string FeaturesHandler::get_feature_log(FeatureType_e f_type, uint log_id) const {
     const auto& feature = features.at(f_type);
     return feature->get_log(log_id);
 }
 
-FeatureType FeaturesHandler::get_current_feature() const {
+FeatureType_e FeaturesHandler::get_current_feature() const {
     return config.current_feature;
 }
 
 std::string FeaturesHandler::get_current_feature_name() const {
     switch (config.current_feature) {
-        case FeatureType::CTRL_C_V: return "ctrl_c_v";
-        case FeatureType::TIME_TRACKER: return "time-tracker";
-        case FeatureType::NONE: return "none";
+        case FeatureType_e::CtrlCV: return "ctrl_c_v";
+        case FeatureType_e::TimeTracker: return "time-tracker";
+        case FeatureType_e::FeatureNone: return "none";
         default: break;
     }
     return "unknown";
 }
 
-FeatureCmdResult FeaturesHandler::get_cmd(FeatureType f_type, const FeatureCommand& command) const {
+FeatureCmdResult FeaturesHandler::get_cmd(FeatureType_e f_type, const FeatureCommand& command) const {
     const auto it = features.find(f_type);
     if (it != features.end()) {
         return it->second->get_cmd(command);
     }
-    return { FeatureCmdStatus::INVALID_COMMAND, std::monostate{} };
+    return { FeatureCmdStatus_e::InvalidCommand, std::monostate{} };
 }
 
-FeatureCmdStatus FeaturesHandler::set_cmd(FeatureType f_type, const FeatureCommand& command) const {
+FeatureCmdStatus_e FeaturesHandler::set_cmd(FeatureType_e f_type, const FeatureCommand& command) const {
     const auto it = features.find(f_type);
     if (it != features.end()) {
         return it->second->set_cmd(command);
     }
-    return FeatureCmdStatus::INVALID_COMMAND;
+    return FeatureCmdStatus_e::InvalidCommand;
 }

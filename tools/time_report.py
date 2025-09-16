@@ -8,13 +8,13 @@ from utils import find_pico_device
 import logging
 import cstruct
 
-MICROSECONDS_IN_SECOND_COUNT = 1_000_000
-MILLISECONDS_IN_SECOND_COUNT = 1_000
+kMicrosecondsInSecondCount = 1_000_000
+kMillisecondsInSecondCount = 1_000
 
 UART_BAUD_RATE = 115200
 
-BINARY_HEADER_1 = 0xAA
-BINARY_HEADER_2 = 0xBB
+kBinaryHeader1 = 0xAA
+kBinaryHeader2 = 0xBB
 
 BIN_MODE_PAYLOAD_LENGTH_FIELD_SIZE_BYTES = 4
 BIN_MODE_RESPONSE_HEADER_SIZE_BYTES = 4 + BIN_MODE_PAYLOAD_LENGTH_FIELD_SIZE_BYTES
@@ -22,14 +22,14 @@ BIN_MODE_CRC_32_SIZE_BYTES = 4
 
 
 class CommandType(Enum):
-    WRITE = 0x01
-    READ = 0x02
+    Write = 0x01
+    Read = 0x02
 
 
 class CommandID(Enum):
-    SYNC_TIME = 0x01
-    GET_TIME_REPORT = 0x02
-    GET_CURRENT_SESSION_ID = 0x03
+    SyncTime = 0x01
+    GetTimeReport = 0x02
+    GET_CurrentSessionId = 0x03
     NEW_SESSION = 0x04
     SET_MEDIUM_THRESHOLD = 0x05
     SET_LONG_THRESHOLD = 0x06
@@ -85,8 +85,8 @@ class TimeTrackingEntry(cstruct.CStruct):
 
 def create_binary_packet(command_type, command_id, payload):
     packet = bytearray()
-    packet.append(BINARY_HEADER_1)
-    packet.append(BINARY_HEADER_2)
+    packet.append(kBinaryHeader1)
+    packet.append(kBinaryHeader2)
     packet.append(command_type.value)
     packet.append(command_id.value)
 
@@ -106,7 +106,7 @@ def parse_response(response):
 
     header1, header0, status, command_id = struct.unpack('<BBBB', response[:4])
     
-    if header1 != BINARY_HEADER_2 or header0 != BINARY_HEADER_1:
+    if header1 != kBinaryHeader2 or header0 != kBinaryHeader1:
         raise ValueError("Invalid response headers")
 
     payload_length = struct.unpack('<I', response[4:8])[0]
@@ -145,14 +145,14 @@ def send_binary_packet(serial_port, packet):
 # ---------------------------------------------------------------------------- #
 
 def sync_time(serial_port):
-    current_time_us = int(time.time() * MICROSECONDS_IN_SECOND_COUNT)  # Current epoch time in microseconds
+    current_time_us = int(time.time() * kMicrosecondsInSecondCount)  # Current epoch time in microseconds
     payload = struct.pack('<Q', current_time_us)    # 64-bit payload
 
-    packet = create_binary_packet(CommandType.WRITE, CommandID.SYNC_TIME, payload)
+    packet = create_binary_packet(CommandType.Write, CommandID.SyncTime, payload)
     response = send_binary_packet(serial_port, packet)
 
     status, command_id = parse_response(response)
-    if command_id != CommandID.SYNC_TIME.value:
+    if command_id != CommandID.SyncTime.value:
         raise ValueError("Mismatched command ID in response")
 
     log.info(f"Sync time status: {status}")
@@ -161,11 +161,11 @@ def sync_time(serial_port):
 def get_time_report(serial_port, session_id=None):
     payload = struct.pack('<I', session_id) if session_id is not None else struct.pack('<I', 0xFFFFFFFF)
 
-    packet = create_binary_packet(CommandType.READ, CommandID.GET_TIME_REPORT, payload)
+    packet = create_binary_packet(CommandType.Read, CommandID.GetTimeReport, payload)
     response = send_binary_packet(serial_port, packet)
 
     status, command_id = parse_response(response)
-    if command_id != CommandID.GET_TIME_REPORT.value:
+    if command_id != CommandID.GetTimeReport.value:
         raise ValueError("Mismatched command ID in response")
 
     if status != 0:
@@ -197,11 +197,11 @@ def parse_time_report_response(response):
 
 
 def get_current_session_id(serial_port):
-    packet = create_binary_packet(CommandType.READ, CommandID.GET_CURRENT_SESSION_ID, b'')
+    packet = create_binary_packet(CommandType.Read, CommandID.GET_CurrentSessionId, b'')
     response = send_binary_packet(serial_port, packet)
 
     status, command_id = parse_response(response)
-    if command_id != CommandID.GET_CURRENT_SESSION_ID.value:
+    if command_id != CommandID.GET_CurrentSessionId.value:
         raise ValueError("Mismatched command ID in response")
 
     if status != 0:
@@ -214,7 +214,7 @@ def get_current_session_id(serial_port):
 
 
 def new_session(serial_port):
-    packet = create_binary_packet(CommandType.WRITE, CommandID.NEW_SESSION, b'')
+    packet = create_binary_packet(CommandType.Write, CommandID.NEW_SESSION, b'')
     response = send_binary_packet(serial_port, packet)
 
     status, command_id = parse_response(response)
@@ -234,7 +234,7 @@ def set_threshold(serial_port, threshold, type="medium"):
         raise ValueError("Invalid threshold type. Use 'medium' or 'long'.")
 
     payload = struct.pack('<I', threshold)
-    packet = create_binary_packet(CommandType.WRITE, command_id, payload)
+    packet = create_binary_packet(CommandType.Write, command_id, payload)
     response = send_binary_packet(serial_port, packet)
 
     status, resp_command_id = parse_response(response)
@@ -254,7 +254,7 @@ def set_threshold_command(serial_port, threshold_type, time_value):
     if hours < 0 or minutes < 0 or minutes >= 60:
         raise ValueError("Invalid time input. Hours must be >= 0, and minutes must be between 0 and 59.")
 
-    threshold_us = (hours * 3600 + minutes * 60) * MILLISECONDS_IN_SECOND_COUNT 
+    threshold_us = (hours * 3600 + minutes * 60) * kMillisecondsInSecondCount 
     set_threshold(serial_port, threshold_us, type=threshold_type)
     log.info(f"Set {threshold_type} threshold to {hours} hours and {minutes} minutes ({threshold_us} milliseconds).")
 

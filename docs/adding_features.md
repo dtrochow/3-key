@@ -49,16 +49,16 @@ The `features` directory contains:
     }
     ```
 
-- Update the `FeatureType` Enum
+- Update the `FeatureType_e` Enum
     - Open `features_handler.hpp`.
-    - Add a new entry for the feature to the `FeatureType` enum.
+    - Add a new entry for the feature to the `FeatureType_e` enum.
     - Example:
 
     ```cpp
-    enum class FeatureType {
-        CTRL_C_V,
-        NEW_FEATURE, // Add your feature here
-        NONE,
+    enum class FeatureType_e{
+        CtrlCV,
+        NewFeature, // Add your feature here
+        None,
     };
     ```
 
@@ -69,8 +69,8 @@ The `features` directory contains:
 
     ```cpp
     void FeaturesHandler::initialize_featuresinit() {
-        features[FeatureType::CTRL_C_V] = std::make_unique<CtrlCVFeature>(keys_config);
-        features[FeatureType::NEW_FEATURE] = std::make_unique<NewFeature>(keys_config);
+        features[FeatureType_e::CtrlCV] = std::make_unique<CtrlCVFeature>(keys_config);
+        features[FeatureType_e::NewFeature] = std::make_unique<NewFeature>(keys_config);
     }
     ```
 
@@ -87,12 +87,12 @@ The `features` directory contains:
         }
 
         const std::string& feature_name = params[0];
-        FeatureType feature;
+        FeatureType_efeature;
 
         if (feature_name == "ctrl_c_v") {
-            feature = FeatureType::CTRL_C_V;
+            feature = FeatureType_e::CtrlCV;
         } else if (feature_name == "new_feature") { // Add parsing logic
-            feature = FeatureType::NEW_FEATURE;
+            feature = FeatureType_e::NewFeature;
         } else {
             add_log("Error: Unknown feature");
             return false;
@@ -141,5 +141,5 @@ The `features` directory contains:
 
 - Future Expansion
     - To add more features, repeat the steps above for each new feature.
-    - Use the `FeatureType` enum and `FeaturesHandler` to manage feature-specific behavior efficiently.
+    - Use the `FeatureType_e` enum and `FeaturesHandler` to manage feature-specific behavior efficiently.
 

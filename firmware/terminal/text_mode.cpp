@@ -31,7 +31,7 @@ TextMode::TextMode(Storage& storage_, KeysConfig& keys_, FeaturesHandler& f_hand
 }
 
 void TextMode::add_log(std::string log) {
-    text_buffer += "\r\n" + log;
+    text_buffer += ("\r\n" + log);
 }
 
 std::span<uint8_t> TextMode::handle(char ch) {
@@ -59,11 +59,11 @@ std::span<uint8_t> TextMode::handle(char ch) {
 }
 
 bool TextMode::is_enter_pressed(char& ch) const {
-    return (ch == '\r' || ch == '\n');
+    return ((ch == '\r') || (ch == '\n'));
 }
 
 bool TextMode::is_backspace_pressed(char& ch) const {
-    return (ch == '\b' || ch == 127);
+    return ((ch == '\b') || (ch == 127));
 }
 
 bool TextMode::is_new_valid_char(char& ch) const {
@@ -72,7 +72,7 @@ bool TextMode::is_new_valid_char(char& ch) const {
 
 bool TextMode::handle_cmd(const std::string& command_str) {
     std::istringstream iss(command_str);
-    std::string command_name;
+    std::string command_name{};
     iss >> command_name;
 
     std::vector<std::string> parameters;
@@ -82,38 +82,38 @@ bool TextMode::handle_cmd(const std::string& command_str) {
     }
 
     const auto it     = command_map.find(command_name);
-    const Command cmd = (it != command_map.end()) ? it->second : Command::UNKNOWN;
+    const Command cmd = (it != command_map.end()) ? it->second : Command::Unknown;
     return dispatch_cmd(cmd, parameters);
 }
 
 bool TextMode::dispatch_cmd(Command command, const std::vector<std::string>& params) {
     switch (command) {
-        case Command::RESET: {
+        case Command::Reset: {
             reset_to_bootloader();
             return true;
         }
-        case Command::ERASE: {
+        case Command::Erase: {
             storage.erase();
             add_log("Flash storage erased");
             return true;
         }
-        case Command::FACTORY_INIT: {
+        case Command::FactoryInit: {
             f_handler.factory_init_features();
             return true;
         }
-        case Command::CHANGE_COLOR: {
+        case Command::ChangeColor: {
             return handle_change_color_cmd(params);
         }
-        case Command::FEATURE: {
+        case Command::Feature: {
             return handle_feature_cmd(params);
         }
-        case Command::TIME: {
+        case Command::Time: {
             return handle_time_cmd(params);
         }
-        case Command::LONG_PRESS_MS: {
+        case Command::LongPressMs: {
             return handle_long_press_ms_cmd(params);
         }
-        case Command::UNKNOWN:
+        case Command::Unknown:
         default: return false;
     }
 }
@@ -140,13 +140,13 @@ bool TextMode::handle_change_color_cmd(const std::vector<std::string>& params) {
     }
 
     const std::string& color_name = params[1];
-    Color color;
+    Color_e color{};
     if (color_name == "red") {
-        color = Color::Red;
+        color = Color_e::Red;
     } else if (color_name == "green") {
-        color = Color::Green;
+        color = Color_e::Green;
     } else if (color_name == "blue") {
-        color = Color::Blue;
+        color = Color_e::Blue;
     } else {
         add_log("Error: Invalid color");
         return false;
@@ -168,14 +168,14 @@ bool TextMode::handle_feature_cmd(const std::vector<std::string>& params) {
     }
 
     const std::string& feature_name = params[0];
-    FeatureType feature;
+    FeatureType_e feature;
 
     if (feature_name == "none") {
-        feature = FeatureType::NONE;
+        feature = FeatureType_e::FeatureNone;
     } else if (feature_name == "ctrl_c_v") {
-        feature = FeatureType::CTRL_C_V;
+        feature = FeatureType_e::CtrlCV;
     } else if (feature_name == "time-tracker") {
-        feature = FeatureType::TIME_TRACKER;
+        feature = FeatureType_e::TimeTracker;
     } else {
         add_log("Error: Unknown feature");
         return false;
@@ -189,7 +189,7 @@ bool TextMode::handle_feature_cmd(const std::vector<std::string>& params) {
 }
 
 bool TextMode::handle_time_cmd(const std::vector<std::string>& params) {
-    if (f_handler.get_current_feature() != FeatureType::TIME_TRACKER) {
+    if (f_handler.get_current_feature() != FeatureType_e::TimeTracker) {
         add_log("Time-Tracker feature is disabled");
         return false;
     }
@@ -203,13 +203,13 @@ bool TextMode::handle_time_cmd(const std::vector<std::string>& params) {
     std::string log;
     if (param == "work") {
         log = f_handler.get_feature_log(
-            FeatureType::TIME_TRACKER, static_cast<uint>(TimeTrackerLog::CURRENT_WORK_TIME_REPORT));
+            FeatureType_e::TimeTracker, static_cast<uint>(TimeTrackerLog_e::CurrentWorkTimeReport));
     } else if (param == "meetings") {
-        log = f_handler.get_feature_log(FeatureType::TIME_TRACKER,
-            static_cast<uint>(TimeTrackerLog::CURRENT_MEETINGS_TIME_REPORT));
+        log = f_handler.get_feature_log(FeatureType_e::TimeTracker,
+            static_cast<uint>(TimeTrackerLog_e::CurrentMeetingsTimeReport));
     } else if (param == "session") {
         log = f_handler.get_feature_log(
-            FeatureType::TIME_TRACKER, static_cast<uint>(TimeTrackerLog::CURRENT_SESSION_ID));
+            FeatureType_e::TimeTracker, static_cast<uint>(TimeTrackerLog_e::CurrentSessionId));
     } else {
         log = "Error: Unsupported argument";
     }

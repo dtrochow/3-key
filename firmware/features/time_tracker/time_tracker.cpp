@@ -30,14 +30,14 @@
 #include "time_tracker.hpp"
 #include "time_tracker_types.hpp"
 
-repeating_timer_t* tracking_timer = nullptr;
+static repeating_timer_t* tracking_timer = nullptr;
 
 bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     auto* tracker = static_cast<TimeTracker*>(timer->user_data);
     if (!tracker)
         return false;
 
-    constexpr uint64_t elapsed_time_us = (TRACING_TIMER_INTERVAL_MS * MICROSECONDS_IN_MILISECOND_COUNT);
+    constexpr uint64_t elapsed_time_us = (kTracingTimerIntervalMs * kMicrosecondsInMillisecondCount);
     auto& entry = tracker->data.tracking_entries[tracker->data.active_session];
     if (entry.tracking_work) {
         entry.work_time_us += elapsed_time_us;
@@ -49,10 +49,10 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
     const uint64_t medium_threshold      = tracker->data.medium_threshold_ms;
     const uint64_t long_threshold        = tracker->data.long_threshold_ms;
     if ((total_tracked_time_ms >= medium_threshold) && !entry.medium_threshold_reached) {
-        tracker->led_enable(FUNCTION_KEY_ID, Color::Yellow);
+        tracker->led_enable(kFunctionKeyId, Color_e::Yellow);
         entry.medium_threshold_reached = true;
     } else if ((total_tracked_time_ms >= long_threshold) && !entry.long_threshold_reached) {
-        tracker->led_enable(FUNCTION_KEY_ID, Color::Red);
+        tracker->led_enable(kFunctionKeyId, Color_e::Red);
         entry.long_threshold_reached = true;
     }
 
@@ -67,7 +67,7 @@ bool TimeTracker::timer_callback(repeating_timer_t* timer) {
 }
 
 void TimeTracker::init() {
-    storage.get_blob(BlobType::TIME_TRACKER_DATA, data);
+    storage.get_blob(BlobType_e::TimeTrackerData, data);
     if (is_factory_required())
         factory_init();
 
@@ -75,15 +75,15 @@ void TimeTracker::init() {
     stop_tracking();
     check_thresholds();
 
-    keys_config.switch_leds_mode(LedsMode::HANDLED_BY_FEATURE);
+    keys_config.switch_leds_mode(LedsMode_e::HandledByFeature);
     set_tracking_date();
 
     tracking_timer = new repeating_timer_t;
-    add_repeating_timer_ms(TRACING_TIMER_INTERVAL_MS, TimeTracker::timer_callback, this, tracking_timer);
+    add_repeating_timer_ms(kTracingTimerIntervalMs, TimeTracker::timer_callback, this, tracking_timer);
 }
 
 void TimeTracker::deinit() {
-    keys_config.switch_leds_mode(LedsMode::WHEN_BUTTON_PRESSED);
+    keys_config.switch_leds_mode(LedsMode_e::WhenButtonPressed);
     disable_all_leds();
 
     if (tracking_timer) {
@@ -94,9 +94,9 @@ void TimeTracker::deinit() {
 }
 
 void TimeTracker::factory_init() {
-    data.magic               = BLOB_MAGIC;
-    data.medium_threshold_ms = MEDIUM_THRESHOLD_MS_DEFAULT;
-    data.long_threshold_ms   = LONG_THRESHOLD_MS_DEFAULT;
+    data.magic               = kBlobMagicNumber;
+    data.medium_threshold_ms = kMediumThresholdMsDefault;
+    data.long_threshold_ms   = kLongThresholdMsDefault;
 
     for (auto& entry : data.tracking_entries) {
         entry.start_time_us            = 0;
@@ -115,43 +115,43 @@ void TimeTracker::factory_init() {
 }
 
 bool TimeTracker::is_factory_required() const {
-    return (data.magic != BLOB_MAGIC);
+    return (data.magic != kBlobMagicNumber);
 }
 
 void TimeTracker::stop_tracking() {
-    previous_tracking_type = TrackingType::NONE;
+    previous_tracking_type = TrackingType_e::None;
     auto& entry            = data.tracking_entries[data.active_session];
     if (entry.tracking_work) {
         entry.tracking_work    = false;
-        previous_tracking_type = TrackingType::WORK_TRACKING;
-        led_disable(WORK_TRACKING_KEY_ID);
+        previous_tracking_type = TrackingType_e::WorkTracking;
+        led_disable(kWorkTrackingKeyId);
     } else if (entry.tracking_meetings) {
         entry.tracking_meetings = false;
-        previous_tracking_type  = TrackingType::MEETING_TRACKING;
-        led_disable(MEETING_TRACKING_KEY_ID);
+        previous_tracking_type  = TrackingType_e::MeetingTracking;
+        led_disable(kMeetingTrackingKeyId);
     }
 }
 
 void TimeTracker::resume_tracking() {
     auto& entry = data.tracking_entries[data.active_session];
-    if (previous_tracking_type == TrackingType::WORK_TRACKING) {
+    if (previous_tracking_type == TrackingType_e::WorkTracking) {
         entry.tracking_work = true;
-        const Color color   = get_key_color_info(WORK_TRACKING_KEY_ID)->color;
-        led_enable(WORK_TRACKING_KEY_ID, color);
-    } else if (previous_tracking_type == TrackingType::MEETING_TRACKING) {
+        const Color_e color = get_key_color_info(kWorkTrackingKeyId)->color;
+        led_enable(kWorkTrackingKeyId, color);
+    } else if (previous_tracking_type == TrackingType_e::MeetingTracking) {
         entry.tracking_meetings = true;
-        const Color color       = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
-        led_enable(MEETING_TRACKING_KEY_ID, color);
+        const Color_e color     = get_key_color_info(kMeetingTrackingKeyId)->color;
+        led_enable(kMeetingTrackingKeyId, color);
     }
 }
 
 void TimeTracker::check_thresholds() {
     const auto& entry = data.tracking_entries[data.active_session];
     if (entry.medium_threshold_reached) {
-        led_enable(FUNCTION_KEY_ID, Color::Yellow);
+        led_enable(kFunctionKeyId, Color_e::Yellow);
     }
     if (entry.long_threshold_reached) {
-        led_enable(FUNCTION_KEY_ID, Color::Red);
+        led_enable(kFunctionKeyId, Color_e::Red);
     }
 }
 
@@ -177,7 +177,7 @@ void TimeTracker::restore_buttons_state() {
 
 bool TimeTracker::is_next_slot_empty() const {
     SessionId next_session = data.active_session + 1;
-    if (next_session >= MAX_TIME_TRACKER_ENTRIES_COUNT) {
+    if (next_session >= kMaxTimeTrackerEntriesCount) {
         next_session = 0;
     }
     auto& entry = data.tracking_entries[next_session];
@@ -196,15 +196,15 @@ void TimeTracker::handle_key_0_press(auto& entry, const bool is_long_press) {
 
         if (entry.tracking_work) {
             entry.tracking_work = false;
-            led_disable(WORK_TRACKING_KEY_ID);
+            led_disable(kWorkTrackingKeyId);
         } else {
             if (entry.tracking_meetings) {
                 entry.tracking_meetings = false;
-                led_disable(MEETING_TRACKING_KEY_ID);
+                led_disable(kMeetingTrackingKeyId);
             }
             entry.tracking_work = true;
-            const Color color   = get_key_color_info(WORK_TRACKING_KEY_ID)->color;
-            led_enable(WORK_TRACKING_KEY_ID, color);
+            const Color_e color = get_key_color_info(kWorkTrackingKeyId)->color;
+            led_enable(kWorkTrackingKeyId, color);
         }
     }
 }
@@ -216,15 +216,15 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
     if (!is_long_press) {
         if (entry.tracking_meetings) {
             entry.tracking_meetings = false;
-            led_disable(MEETING_TRACKING_KEY_ID);
+            led_disable(kMeetingTrackingKeyId);
         } else {
             if (entry.tracking_work) {
                 entry.tracking_work = false;
-                led_disable(WORK_TRACKING_KEY_ID);
+                led_disable(kWorkTrackingKeyId);
             }
             entry.tracking_meetings = true;
-            const Color color       = get_key_color_info(MEETING_TRACKING_KEY_ID)->color;
-            led_enable(MEETING_TRACKING_KEY_ID, color);
+            const Color_e color     = get_key_color_info(kMeetingTrackingKeyId)->color;
+            led_enable(kMeetingTrackingKeyId, color);
         }
     } else {
         /*
@@ -239,15 +239,15 @@ void TimeTracker::handle_key_1_press(auto& entry, const bool is_long_press) {
         const uint led_0                = session_id / 10;
         const uint led_1                = session_id % 10;
         constexpr uint led_blink_period = 500;
-        led_blink(WORK_TRACKING_KEY_ID, led_blink_period, led_0, Color::Green);
-        led_blink(MEETING_TRACKING_KEY_ID, led_blink_period, led_1, Color::Green);
+        led_blink(kWorkTrackingKeyId, led_blink_period, led_0, Color_e::Green);
+        led_blink(kMeetingTrackingKeyId, led_blink_period, led_1, Color_e::Green);
 
         restore_buttons_state();
     }
 }
 
 void TimeTracker::handle_key_2_press(const bool is_long_press) {
-    Color color = get_key_color_info(FUNCTION_KEY_ID)->color;
+    Color_e color = get_key_color_info(kFunctionKeyId)->color;
     if (is_long_press) {
         if (awaiting_confirmation)
             return;
@@ -257,8 +257,8 @@ void TimeTracker::handle_key_2_press(const bool is_long_press) {
             save_buttons_state();
             disable_all_leds();
             stop_tracking();
-            led_enable(WORK_TRACKING_KEY_ID, Color::Red);
-            led_enable(FUNCTION_KEY_ID, Color::Green);
+            led_enable(kWorkTrackingKeyId, Color_e::Red);
+            led_enable(kFunctionKeyId, Color_e::Green);
             return;
         }
 
@@ -275,9 +275,9 @@ void TimeTracker::handle_key_2_press(const bool is_long_press) {
             /* Tracked hours indicator */
             const uint hours = get_hours_tracked();
             if (hours > 0) {
-                led_blink(FUNCTION_KEY_ID, 800, hours, Color::Green);
+                led_blink(kFunctionKeyId, 800, hours, Color_e::Green);
             } else {
-                led_blink(FUNCTION_KEY_ID, 800, 1, Color::Green);
+                led_blink(kFunctionKeyId, 800, 1, Color_e::Green);
             }
         }
     }
@@ -296,7 +296,7 @@ void TimeTracker::initialize_new_session() {
 }
 
 void TimeTracker::move_to_next_session(bool animate) {
-    if (data.active_session < (MAX_TIME_TRACKER_ENTRIES_COUNT - 1)) {
+    if (data.active_session < (kMaxTimeTrackerEntriesCount - 1)) {
         data.active_session++;
     } else {
         data.active_session = 0;
@@ -305,7 +305,7 @@ void TimeTracker::move_to_next_session(bool animate) {
     disable_all_leds();
     initialize_new_session();
     if (animate) {
-        next_session_animation(Color::Green);
+        next_session_animation(Color_e::Green);
     }
 }
 
@@ -315,9 +315,9 @@ void TimeTracker::tracker(const uint key_id, const bool is_long_press) {
     set_tracking_date();
 
     switch (key_id) {
-        case WORK_TRACKING_KEY_ID: handle_key_0_press(entry, is_long_press); break;
-        case MEETING_TRACKING_KEY_ID: handle_key_1_press(entry, is_long_press); break;
-        case FUNCTION_KEY_ID: handle_key_2_press(is_long_press); break;
+        case kWorkTrackingKeyId: handle_key_0_press(entry, is_long_press); break;
+        case kMeetingTrackingKeyId: handle_key_1_press(entry, is_long_press); break;
+        case kFunctionKeyId: handle_key_2_press(is_long_press); break;
         /* Unexpected key_id */
         default: return;
     }
@@ -336,26 +336,26 @@ void TimeTracker::handle(Buttons& buttons) {
 std::string TimeTracker::get_log(uint log_id) const {
     std::string log;
     auto& entry = data.tracking_entries[data.active_session];
-    switch (static_cast<TimeTrackerLog>(log_id)) {
-        case TimeTrackerLog::CURRENT_WORK_TIME_REPORT: {
-            const uint64_t total_seconds = entry.work_time_us / MICROSECONDS_IN_SECOND_COUNT;
-            const uint64_t hours         = (total_seconds / SECONDS_IN_HOUR_COUNT);
-            const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
-            const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
+    switch (static_cast<TimeTrackerLog_e>(log_id)) {
+        case TimeTrackerLog_e::CurrentWorkTimeReport: {
+            const uint64_t total_seconds = entry.work_time_us / kMicrosecondsInSecondCount;
+            const uint64_t hours         = (total_seconds / kSecondsInHourCount);
+            const uint64_t minutes = ((total_seconds % kSecondsInHourCount) / kSecondsInMinuteCount);
+            const uint64_t seconds = (total_seconds % kSecondsInMinuteCount);
 
             log = time.get_current_date_and_time_string() + " Work: " + std::to_string(hours) +
                 "h " + std::to_string(minutes) + "min " + std::to_string(seconds) + "s";
         } break;
-        case TimeTrackerLog::CURRENT_MEETINGS_TIME_REPORT: {
-            const uint64_t total_seconds = entry.meeting_time_us / MICROSECONDS_IN_SECOND_COUNT;
-            const uint64_t hours         = (total_seconds / SECONDS_IN_HOUR_COUNT);
-            const uint64_t minutes = ((total_seconds % SECONDS_IN_HOUR_COUNT) / SECONDS_IN_MINUTE_COUNT);
-            const uint64_t seconds = (total_seconds % SECONDS_IN_MINUTE_COUNT);
+        case TimeTrackerLog_e::CurrentMeetingsTimeReport: {
+            const uint64_t total_seconds = entry.meeting_time_us / kMicrosecondsInSecondCount;
+            const uint64_t hours         = (total_seconds / kSecondsInHourCount);
+            const uint64_t minutes = ((total_seconds % kSecondsInHourCount) / kSecondsInMinuteCount);
+            const uint64_t seconds = (total_seconds % kSecondsInMinuteCount);
 
             log = time.get_current_date_and_time_string() + " Meetings: " + std::to_string(hours) +
                 "h " + std::to_string(minutes) + "min " + std::to_string(seconds) + "s";
         } break;
-        case TimeTrackerLog::CURRENT_SESSION_ID:
+        case TimeTrackerLog_e::CurrentSessionId:
             log = "Current session ID: " + std::to_string(data.active_session);
             break;
         default: log = "Invalid log ID";
@@ -373,43 +373,43 @@ FeatureCmdResult TimeTracker::get_cmd(const FeatureCommand& command) const {
         const uint32_t session_id = std::get<GetTimeTrackerEntryCmd>(command).session_id;
         /* Current session case */
         if (session_id == uint32_t(-1)) {
-            return { FeatureCmdStatus::SUCCESS, data.tracking_entries[data.active_session] };
+            return { FeatureCmdStatus_e::Success, data.tracking_entries[data.active_session] };
         } else {
-            if (session_id >= MAX_TIME_TRACKER_ENTRIES_COUNT) {
-                return { FeatureCmdStatus::INVALID_PAYLOAD, std::monostate{} };
+            if (session_id >= kMaxTimeTrackerEntriesCount) {
+                return { FeatureCmdStatus_e::InvalidPayload, std::monostate{} };
             }
-            return { FeatureCmdStatus::SUCCESS, data.tracking_entries[session_id] };
+            return { FeatureCmdStatus_e::Success, data.tracking_entries[session_id] };
         }
     } else if (std::holds_alternative<GetTimeTrackerCurrentActiveSessionIdCmd>(command)) {
-        return { FeatureCmdStatus::SUCCESS, data.active_session };
+        return { FeatureCmdStatus_e::Success, data.active_session };
     }
-    return { FeatureCmdStatus::INVALID_COMMAND, std::monostate{} };
+    return { FeatureCmdStatus_e::InvalidCommand, std::monostate{} };
 }
 
-FeatureCmdStatus TimeTracker::set_cmd(const FeatureCommand& command) {
+FeatureCmdStatus_e TimeTracker::set_cmd(const FeatureCommand& command) {
     if (std::holds_alternative<NewTimeTrackerSessionCmd>(command)) {
         move_to_next_session(false);
-        return FeatureCmdStatus::SUCCESS;
+        return FeatureCmdStatus_e::Success;
     } else if (std::holds_alternative<SetTimeTrackerMediumThresholdCmd>(command)) {
         const auto threshold_ms = std::get<SetTimeTrackerMediumThresholdCmd>(command).threshold_ms;
         if (threshold_ms > std::numeric_limits<uint64_t>::max()) {
-            return FeatureCmdStatus::INVALID_PAYLOAD;
+            return FeatureCmdStatus_e::InvalidPayload;
         }
         data.medium_threshold_ms = threshold_ms;
         save_tracking_data();
-        return FeatureCmdStatus::SUCCESS;
+        return FeatureCmdStatus_e::Success;
     } else if (std::holds_alternative<SetTimeTrackerLongThresholdCmd>(command)) {
         const auto threshold_ms = std::get<SetTimeTrackerLongThresholdCmd>(command).threshold_ms;
         if (threshold_ms > std::numeric_limits<uint64_t>::max()) {
-            return FeatureCmdStatus::INVALID_PAYLOAD;
+            return FeatureCmdStatus_e::InvalidPayload;
         }
         data.long_threshold_ms = threshold_ms;
         save_tracking_data();
-        return FeatureCmdStatus::SUCCESS;
+        return FeatureCmdStatus_e::Success;
     } else if (std::holds_alternative<GetTimeTrackerEntryCmd>(command)) {
-        return FeatureCmdStatus::SET_COMMAND_UNSUPPORTED;
+        return FeatureCmdStatus_e::SetCommandUnsupported;
     } else if (std::holds_alternative<GetTimeTrackerCurrentActiveSessionIdCmd>(command)) {
-        return FeatureCmdStatus::GET_COMMAND_UNSUPPORTED;
+        return FeatureCmdStatus_e::GetCommandUnsupported;
     }
-    return FeatureCmdStatus::INVALID_COMMAND;
+    return FeatureCmdStatus_e::InvalidCommand;
 }

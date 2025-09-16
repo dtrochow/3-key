@@ -28,18 +28,18 @@
 #endif
 
 enum class Month : uint8_t {
-    JANUARY   = 1,
-    FEBRUARY  = 2,
-    MARCH     = 3,
-    APRIL     = 4,
-    MAY       = 5,
-    JUNE      = 6,
-    JULY      = 7,
-    AUGUST    = 8,
-    SEPTEMBER = 9,
-    OCTOBER   = 10,
-    NOVEMBER  = 11,
-    DECEMBER  = 12,
+    January   = 1,
+    February  = 2,
+    March     = 3,
+    April     = 4,
+    May       = 5,
+    June      = 6,
+    July      = 7,
+    August    = 8,
+    September = 9,
+    October   = 10,
+    November  = 11,
+    December  = 12,
 };
 
 Time::Time() : synced_time_us(0) {}
@@ -52,29 +52,29 @@ uint64_t Time::get_current_time_us() const {
 }
 
 uint64_t Time::get_current_time_ms() const {
-    return get_current_time_us() / 1000;
+    return (get_current_time_us() / 1000);
 }
 
 uint64_t Time::get_current_time_s() const {
-    return get_current_time_us() / 1000000;
+    return (get_current_time_us() / 1000000);
 }
 
 DateTime_t Time::get_current_date_and_time() const {
-    constexpr uint16_t EPOCH_YEAR             = 1970;
-    constexpr uint32_t SECONDS_IN_MINUTE      = 60;
-    constexpr uint32_t SECONDS_IN_HOUR        = 60 * SECONDS_IN_MINUTE;
-    constexpr uint32_t SECONDS_IN_DAY         = 24 * SECONDS_IN_HOUR;
-    constexpr uint32_t SECONDS_IN_COMMON_YEAR = 365 * SECONDS_IN_DAY;
-    constexpr uint32_t SECONDS_IN_LEAP_YEAR   = 366 * SECONDS_IN_DAY;
+    static constexpr uint16_t kEpochYear           = 1970;
+    static constexpr uint32_t kSecondsInMinute     = 60;
+    static constexpr uint32_t kSecondsInHour       = 60 * kSecondsInMinute;
+    static constexpr uint32_t kSecondsInDay        = 24 * kSecondsInHour;
+    static constexpr uint32_t kSecondsInCommonYear = 365 * kSecondsInDay;
+    static constexpr uint32_t kSecondsInLeapYear   = 366 * kSecondsInDay;
 
-    constexpr uint8_t DAYS_IN_MONTH[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    static constexpr uint8_t kDaysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
     uint64_t total_seconds = get_current_time_s();
-    uint16_t year          = EPOCH_YEAR;
+    uint16_t year          = kEpochYear;
 
     while (true) {
         const bool is_leap       = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-        uint32_t seconds_in_year = is_leap ? SECONDS_IN_LEAP_YEAR : SECONDS_IN_COMMON_YEAR;
+        uint32_t seconds_in_year = is_leap ? kSecondsInLeapYear : kSecondsInCommonYear;
         if (total_seconds >= seconds_in_year) {
             total_seconds -= seconds_in_year;
             year++;
@@ -83,14 +83,14 @@ DateTime_t Time::get_current_date_and_time() const {
         }
     }
 
-    Month month = Month::JANUARY;
+    Month month = Month::January;
     while (true) {
         const bool is_leap         = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-        uint8_t days_in_this_month = DAYS_IN_MONTH[static_cast<uint8_t>(month) - 1];
-        if (is_leap && month == Month::FEBRUARY) {
+        uint8_t days_in_this_month = kDaysInMonth[static_cast<uint8_t>(month) - 1];
+        if (is_leap && month == Month::February) {
             days_in_this_month++;
         }
-        const uint32_t seconds_in_month = days_in_this_month * SECONDS_IN_DAY;
+        const uint32_t seconds_in_month = days_in_this_month * kSecondsInDay;
         if (total_seconds >= seconds_in_month) {
             total_seconds -= seconds_in_month;
             month = static_cast<Month>(static_cast<uint8_t>(month) + 1);
@@ -99,12 +99,12 @@ DateTime_t Time::get_current_date_and_time() const {
         }
     }
 
-    const auto day = static_cast<uint8_t>(total_seconds / SECONDS_IN_DAY) + 1;
-    total_seconds %= SECONDS_IN_DAY;
-    const auto hour = static_cast<uint8_t>(total_seconds / SECONDS_IN_HOUR);
-    total_seconds %= SECONDS_IN_HOUR;
-    const auto minute = static_cast<uint8_t>(total_seconds / SECONDS_IN_MINUTE);
-    const auto second = static_cast<uint8_t>(total_seconds % SECONDS_IN_MINUTE);
+    const auto day = static_cast<uint8_t>(total_seconds / kSecondsInDay) + 1;
+    total_seconds %= kSecondsInDay;
+    const auto hour = static_cast<uint8_t>(total_seconds / kSecondsInHour);
+    total_seconds %= kSecondsInHour;
+    const auto minute = static_cast<uint8_t>(total_seconds / kSecondsInMinute);
+    const auto second = static_cast<uint8_t>(total_seconds % kSecondsInMinute);
 
     return { year, static_cast<uint8_t>(month), static_cast<uint8_t>(day), hour, minute, second };
 }

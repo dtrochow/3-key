@@ -30,38 +30,38 @@
 #include "pico/stdlib.h"
 #include "storage.hpp"
 
-typedef struct {
+struct KeyConfigTableEntry_t {
     uint key_id;
     Button key;
-    Color color;
-} KeyConfigTableEntry_t;
-
-constexpr uint MAX_KEYS_COUNT              = 10;
-constexpr uint LONG_PRESS_DELAY_MS_DEFAULT = 800;
-
-enum class LedsMode {
-    WHEN_BUTTON_PRESSED,
-    HANDLED_BY_FEATURE,
-    NONE,
+    Color_e color;
 };
 
-typedef struct {
+inline constexpr uint kMaxKeysCount            = 10;
+inline constexpr uint kLongPressDelayMsDefault = 800;
+
+enum class LedsMode_e : uint8_t {
+    WhenButtonPressed,
+    HandledByFeature,
+    None,
+};
+
+struct KeysConfig_t {
     uint32_t magic;
-    ButtonConfig keys[MAX_KEYS_COUNT];
+    ButtonConfig keys[kMaxKeysCount];
     uint32_t keys_count;
-} KeysConfig_t;
+};
 
 class KeysConfig {
   public:
     KeysConfig(std::vector<ButtonConfig> keys_default, Storage& storage_)
-    : storage(storage_), leds_mode(LedsMode::WHEN_BUTTON_PRESSED) {
+    : storage(storage_), leds_mode(LedsMode_e::WhenButtonPressed) {
         init(keys_default);
     }
     ~KeysConfig() = default;
 
   private:
     void init(const std::vector<ButtonConfig>& keys_default) {
-        storage.get_blob(BlobType::KEYS_CONFIG, config);
+        storage.get_blob(BlobType_e::KeysConfig, config);
 
         if (is_factory_required()) {
             factory_init(keys_default);
@@ -69,23 +69,23 @@ class KeysConfig {
     }
 
     void factory_init(const std::vector<ButtonConfig>& keys_default) {
-        config.magic      = BLOB_MAGIC;
-        config.keys_count = std::min(static_cast<uint>(keys_default.size()), MAX_KEYS_COUNT);
+        config.magic      = kBlobMagicNumber;
+        config.keys_count = std::min(static_cast<uint>(keys_default.size()), kMaxKeysCount);
 
         for (uint32_t i = 0; i < config.keys_count; ++i) {
             config.keys[i] = keys_default[i];
         }
 
-        storage.save_blob(BlobType::KEYS_CONFIG, config);
+        storage.save_blob(BlobType_e::KeysConfig, config);
     }
 
   private:
     KeysConfig_t config;
     Storage& storage;
-    LedsMode leds_mode;
-    uint long_press_delay_ms = LONG_PRESS_DELAY_MS_DEFAULT;
+    LedsMode_e leds_mode;
+    uint long_press_delay_ms = kLongPressDelayMsDefault;
 
-    bool is_factory_required() { return (config.magic != BLOB_MAGIC); }
+    bool is_factory_required() { return (config.magic != kBlobMagicNumber); }
 
   public:
     bool is_enabled(uint key_id) const { return config.keys[key_id].enabled; }
@@ -100,24 +100,24 @@ class KeysConfig {
         }
     }
 
-    LedsMode get_leds_mode() const { return leds_mode; }
+    LedsMode_e get_leds_mode() const { return leds_mode; }
 
-    void switch_leds_mode(LedsMode mode) {
+    void switch_leds_mode(LedsMode_e mode) {
         leds_mode = mode;
         switch (leds_mode) {
-            case LedsMode::WHEN_BUTTON_PRESSED: {
+            case LedsMode_e::WhenButtonPressed: {
                 for (auto const& key : get_key_cfgs()) {
                     gpio_set_irq_enabled_with_callback(key.gpio, GPIO_IRQ_LEVEL_LOW, false, &gpio_callback);
                 }
                 break;
             }
-            case LedsMode::HANDLED_BY_FEATURE: {
+            case LedsMode_e::HandledByFeature: {
                 for (auto const& key : get_key_cfgs()) {
                     gpio_set_irq_enabled_with_callback(key.gpio, GPIO_IRQ_LEVEL_LOW, true, &gpio_callback);
                 }
                 break;
             }
-            case LedsMode::NONE:
+            case LedsMode_e::None:
             default: break;
         }
     }
@@ -128,12 +128,12 @@ class KeysConfig {
 
     uint get_keys_count() const { return config.keys_count; }
 
-    void set_key_color(uint key_id, Color color, bool save = false) {
+    void set_key_color(uint key_id, Color_e color, bool save = false) {
         if (key_id >= config.keys_count)
             return;
         config.keys[key_id].color = color;
         if (save)
-            storage.save_blob(BlobType::KEYS_CONFIG, config);
+            storage.save_blob(BlobType_e::KeysConfig, config);
     }
 
     void set_key_value(uint key_id, Button btn, bool save = false) {
@@ -141,19 +141,19 @@ class KeysConfig {
             return;
         config.keys[key_id].key_value = btn;
         if (save)
-            storage.save_blob(BlobType::KEYS_CONFIG, config);
+            storage.save_blob(BlobType_e::KeysConfig, config);
     }
 
-    Color get_key_color(uint key_id) const {
+    Color_e get_key_color(uint key_id) const {
         if (key_id >= config.keys_count) {
-            return Color::None;
+            return Color_e::None;
         }
         return config.keys[key_id].color;
     }
 
     Button get_key_value(uint key_id) const {
         if (key_id >= config.keys_count) {
-            return Key::NONE;
+            return Key_e::KeyNone;
         }
         return config.keys[key_id].key_value;
     }

@@ -32,14 +32,14 @@
 #include "storage.hpp"
 
 enum class Command {
-    RESET,
-    ERASE,
-    CHANGE_COLOR,
-    FEATURE,
-    TIME,
-    LONG_PRESS_MS,
-    FACTORY_INIT,
-    UNKNOWN,
+    Reset,
+    Erase,
+    ChangeColor,
+    Feature,
+    Time,
+    LongPressMs,
+    FactoryInit,
+    Unknown,
 };
 
 class TextMode {
@@ -71,13 +71,13 @@ class TextMode {
 
     /* Command strings mapping */
     std::map<std::string, Command> command_map = {
-        { "reset", Command::RESET },
-        { "erase", Command::ERASE },
-        { "factory_init", Command::FACTORY_INIT },
-        { "color", Command::CHANGE_COLOR },
-        { "feature", Command::FEATURE },
-        { "time", Command::TIME },
-        { "long_press_ms", Command::LONG_PRESS_MS },
+        { "reset", Command::Reset },
+        { "erase", Command::Erase },
+        { "factory_init", Command::FactoryInit },
+        { "color", Command::ChangeColor },
+        { "feature", Command::Feature },
+        { "time", Command::Time },
+        { "long_press_ms", Command::LongPressMs },
     };
 
     /* Commands handling */

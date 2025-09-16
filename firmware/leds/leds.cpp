@@ -43,14 +43,14 @@ void Leds::enable(uint led_id, bool r) {
         return;
     }
     switch (keys.get_key_color(led_id)) {
-        case Red: leds[led_id] = Led(255, 0, 0); break;
-        case Green: leds[led_id] = Led(0, 255, 0); break;
-        case Blue: leds[led_id] = Led(0, 0, 255); break;
-        case Yellow: leds[led_id] = Led(255, 255, 0); break;
-        case Purple: leds[led_id] = Led(255, 0, 255); break;
-        case Orange: leds[led_id] = Led(255, 127, 0); break;
-        case Cyan: leds[led_id] = Led(0, 255, 255); break;
-        case None: leds[led_id] = Led(0, 0, 0); break;
+        case Color_e::Red: leds[led_id] = Led(255, 0, 0); break;
+        case Color_e::Green: leds[led_id] = Led(0, 255, 0); break;
+        case Color_e::Blue: leds[led_id] = Led(0, 0, 255); break;
+        case Color_e::Yellow: leds[led_id] = Led(255, 255, 0); break;
+        case Color_e::Purple: leds[led_id] = Led(255, 0, 255); break;
+        case Color_e::Orange: leds[led_id] = Led(255, 127, 0); break;
+        case Color_e::Cyan: leds[led_id] = Led(0, 255, 255); break;
+        case Color_e::None: leds[led_id] = Led(0, 0, 0); break;
         default: break;
     }
     if (r)
@@ -116,7 +116,7 @@ void Leds::blink(uint led_id, uint count, float freq) {
     }
 }
 
-LedsMode Leds::mode() const {
+LedsMode_e Leds::mode() const {
     return keys.get_leds_mode();
 }
 
@@ -131,7 +131,7 @@ void Leds::update_led_states() {
 
 void leds_task(Leds& leds, const Buttons& buttons) {
     switch (leds.mode()) {
-        case LedsMode::WHEN_BUTTON_PRESSED: {
+        case LedsMode_e::WhenButtonPressed: {
             const std::vector<Button> btns = buttons.get_btns();
             for (const auto& btn : btns) {
                 const uint btn_id = buttons.get_btn_id(btn);
@@ -143,11 +143,11 @@ void leds_task(Leds& leds, const Buttons& buttons) {
             }
             break;
         }
-        case LedsMode::HANDLED_BY_FEATURE: {
+        case LedsMode_e::HandledByFeature: {
             leds.update_led_states();
             break;
         }
-        case LedsMode::NONE:
+        case LedsMode_e::None:
         default: break;
     }
     leds.refresh();

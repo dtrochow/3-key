@@ -18,7 +18,7 @@ Binary packets are structured as follows:
 |---------|------------------------------|
 | 0       | **Header 1**: Start byte (fixed value) |
 | 1       | **Header 2**: Second start byte (fixed value) |
-| 2       | **Command Type**: Specifies whether the operation is a `READ` or `WRITE`. |
+| 2       | **Command Type**: Specifies whether the operation is a `Read` or `Write`. |
 | 3       | **Command ID**: Identifies the specific command being executed. |
 | 4–7     | **Payload Length**: Length of the payload in bytes (little-endian). |
 | 8–N     | **Payload**: Command-specific data (optional, varies by command). |
@@ -30,15 +30,15 @@ Binary packets are structured as follows:
 
 Each command can define its own payload structure. Here’s the general outline:
 
-1. **Write Mode (`Command Type = WRITE`)**:
+1. **Write Mode (`Command Type = Write`)**:
    - Sends data from the terminal to the device.
    - Payload contains command-specific information.
 
-2. **Read Mode (`Command Type = READ`)**:
+2. **Read Mode (`Command Type = Read`)**:
    - Requests data from the device.
    - Typically does not require a payload.
 
-### Example: `SYNC_TIME` Command Payload (Write Mode)
+### Example: `SyncTime` Command Payload (Write Mode)
 
 | Byte(s) | Description                 |
 |---------|-----------------------------|
@@ -54,7 +54,7 @@ Responses sent by the device follow the same basic structure as requests but wit
 |---------|------------------------------|
 | 0       | **Header 1**: Start byte. |
 | 1       | **Header 2**: Second start byte. |
-| 2       | **Status**: Command execution status (`SUCCESS`, `INVALID_PAYLOAD`, etc.). |
+| 2       | **Status**: Command execution status (`Success`, `InvalidPayload`, etc.). |
 | 3       | **Command ID**: ID of the command being responded to. |
 | 4–7     | **Payload Length**: Length of the payload (usually `0x00 0x00 0x00 0x00` if no payload). |
 | 8–11    | **CRC32**: Checksum covering the response.
@@ -63,9 +63,9 @@ Responses sent by the device follow the same basic structure as requests but wit
 
 | Status Code | Meaning                     |
 |-------------|-----------------------------|
-| `0x00`      | `SUCCESS`: Command executed successfully. |
-| `0x01`      | `INVALID_PAYLOAD`: Payload size or format is invalid. |
-| `0x02`      | `UNSUPPORTED_CMP_TYPE`: Unsupported command type (e.g., `READ` for `SYNC_TIME`). |
+| `0x00`      | `Success`: Command executed successfully. |
+| `0x01`      | `InvalidPayload`: Payload size or format is invalid. |
+| `0x02`      | `UnsupportedCmdType`: Unsupported command type (e.g., `Read` for `SyncTime`). |
 
 ---
 
@@ -73,10 +73,10 @@ Responses sent by the device follow the same basic structure as requests but wit
 
 The following commands are currently supported:
 
-### 1. `SYNC_TIME`
+### 1. `SyncTime`
 Synchronizes the device's internal time with the provided timestamp.
 
-- **Command Type**: `WRITE`
+- **Command Type**: `Write`
 - **Command ID**: `0x01`
 - **Payload**:
     - **Bytes 0–7**: Timestamp in microseconds (64-bit, little-endian).
@@ -85,10 +85,10 @@ Synchronizes the device's internal time with the provided timestamp.
     - **Success**: The device sets its internal time and returns a success response.
     - **Failure**: Returns an error status if the payload is invalid or the command type is unsupported.
 
-### 2. `GET_TIME_REPORT`
+### 2. `GetTimeReport`
 Retrieves a detailed time tracking report for a specific session.
 
-- **Command Type**: `READ`
+- **Command Type**: `Read`
 - **Command ID**: `0x02`
 - **Payload**:
     - **Bytes 0–3**: Session ID (32-bit, little-endian). Use `0xFFFFFFFF` to retrieve the latest session.
@@ -101,10 +101,10 @@ Retrieves a detailed time tracking report for a specific session.
         - Date and time of the session.
     - **Failure**: Returns an error status if the session ID is invalid or the command type is unsupported.
 
-### 3. `GET_TIME_SESSION_ID`
+### 3. `GetTimeSessionId`
 Retrieves the current active session ID.
 
-- **Command Type**: `READ`
+- **Command Type**: `Read`
 - **Command ID**: `0x03`
 - **Payload**: None.
 
@@ -112,10 +112,10 @@ Retrieves the current active session ID.
     - **Success**: Returns the current active session ID as a 32-bit integer.
     - **Failure**: Returns an error status if the command type is unsupported.
 
-### 4. `TIME_NEW_SESSION`
+### 4. `TimeNewSession`
 Starts a new time tracking session by moving to the next available session slot.
 
-- **Command Type**: `WRITE`
+- **Command Type**: `Write`
 - **Command ID**: `0x04`
 - **Payload**: None.
 
@@ -123,10 +123,10 @@ Starts a new time tracking session by moving to the next available session slot.
     - **Success**: A new session is started, and the device returns a success response.
     - **Failure**: Returns an error status if the command type is unsupported or if the session cannot be created.
 
-### 5. `TIME_SET_MEDIUM_THRESHOLD`
+### 5. `TimeSetMediumThreshold`
 Sets the medium threshold for time tracking. This threshold triggers a specific action (e.g., LED indication) when the total tracked time exceeds the threshold.
 
-- **Command Type**: `WRITE`
+- **Command Type**: `Write`
 - **Command ID**: `0x05`
 - **Payload**:
     - **Bytes 0–3**: Medium threshold in milliseconds (32-bit, little-endian).
@@ -135,10 +135,10 @@ Sets the medium threshold for time tracking. This threshold triggers a specific 
     - **Success**: The medium threshold is updated, and the device returns a success response.
     - **Failure**: Returns an error status if the payload is invalid or the command type is unsupported.
 
-### 6. `TIME_SET_LONG_THRESHOLD`
+### 6. `TimeSetLongThreshold`
 Sets the long threshold for time tracking. This threshold triggers a specific action (e.g., LED indication) when the total tracked time exceeds the threshold.
 
-- **Command Type**: `WRITE`
+- **Command Type**: `Write`
 - **Command ID**: `0x06`
 - **Payload**:
     - **Bytes 0–3**: Long threshold in milliseconds (32-bit, little-endian).
@@ -152,8 +152,8 @@ Sets the long threshold for time tracking. This threshold triggers a specific ac
 ### Synchronizing Time
 
 1. **Send Request**
-    - Command: `SYNC_TIME`
-    - Command Type: `WRITE`
+    - Command: `SyncTime`
+    - Command Type: `Write`
     - Payload: Timestamp (e.g., `0x00 0x00 0x1A 0xE1 0x4E 0x6C 0x00 0x00` for `1700000000000` microseconds)
 
 2. **Device Processes**
@@ -165,8 +165,8 @@ Sets the long threshold for time tracking. This threshold triggers a specific ac
      ```
       Header 1: 0xAA
       Header 2: 0xBB
-      Status: 0x00 (SUCCESS)
-      Command ID: 0x01 (SYNC_TIME)
+      Status: 0x00 (Success)
+      Command ID: 0x01 (SyncTime)
       Payload Length: 0x00 0x00 0x00 0x00
       CRC32: Calculated checksum.
      ```

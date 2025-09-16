@@ -28,29 +28,29 @@
 
 Storage::Storage(mutex_t& mutex_) : mutex(mutex_) {
     sector.resize(blobs_per_sector);
-    max_blob_id        = (STORAGE_SIZE / BLOB_SLOT_SIZE_BYTES) - 1;
-    storage_start_addr = reinterpret_cast<const uint8_t*>(XIP_BASE + STORAGE_FLASH_OFFSET);
+    max_blob_id        = (kStorageSize / kBlobSlotSizeBytes) - 1;
+    storage_start_addr = reinterpret_cast<const uint8_t*>(XIP_BASE + kStorageFlashOffset);
 }
 
-StorageStatus Storage::init() {
-    StorageStatus status = StorageStatus::ERROR;
-    (void)get_blob(BlobType::STORAGE_CONFIG, s_config);
+StorageStatus_e Storage::init() {
+    StorageStatus_e status = StorageStatus_e::Error;
+    (void)get_blob(BlobType_e::StorageConfig, s_config);
 
     if (is_factory_required()) {
         status = factory_init();
-        if (status != StorageStatus::SUCCESS)
+        if (status != StorageStatus_e::Success)
             return status;
     }
 
     s_config.init_count += 1;
 
-    return save_blob(BlobType::STORAGE_CONFIG, s_config);
+    return save_blob(BlobType_e::StorageConfig, s_config);
 }
 
-StorageStatus Storage::factory_init() {
-    s_config.magic      = BLOB_MAGIC;
+StorageStatus_e Storage::factory_init() {
+    s_config.magic      = kBlobMagicNumber;
     s_config.init_count = 0;
-    return save_blob(BlobType::STORAGE_CONFIG, s_config);
+    return save_blob(BlobType_e::StorageConfig, s_config);
 }
 
 uint32_t Storage::get_init_count() const {
@@ -58,20 +58,20 @@ uint32_t Storage::get_init_count() const {
 }
 
 bool Storage::is_factory_required() {
-    return (s_config.magic != BLOB_MAGIC);
+    return (s_config.magic != kBlobMagicNumber);
 }
 
 void Storage::erase() const {
     mutex_enter_blocking(&mutex);
     const uint32_t interrupts = save_and_disable_interrupts();
-    flash_range_erase(STORAGE_FLASH_OFFSET & ~(FLASH_SECTOR_SIZE - 1), STORAGE_SIZE);
+    flash_range_erase(kStorageFlashOffset & ~(FLASH_SECTOR_SIZE - 1), kStorageSize);
     restore_interrupts(interrupts);
     mutex_exit(&mutex);
 }
 
 void Storage::erase(uint sector_id) const {
     const uint32_t interrupts   = save_and_disable_interrupts();
-    const uintptr_t sector_addr = STORAGE_FLASH_OFFSET + (sector_id * FLASH_SECTOR_SIZE);
+    const uintptr_t sector_addr = kStorageFlashOffset + (sector_id * FLASH_SECTOR_SIZE);
     flash_range_erase(sector_addr & ~(FLASH_SECTOR_SIZE - 1), FLASH_SECTOR_SIZE);
     restore_interrupts(interrupts);
 }
@@ -81,39 +81,39 @@ const uint8_t* Storage::get_blob_address(uint blob_id) const {
         return nullptr;
     }
 
-    return (storage_start_addr + (blob_id * BLOB_SLOT_SIZE_BYTES));
+    return (storage_start_addr + (blob_id * kBlobSlotSizeBytes));
 }
 
-StorageStatus Storage::_get_blob(BlobType blob_type, std::span<uint8_t> blob) const {
+StorageStatus_e Storage::_get_blob(BlobType_e blob_type, std::span<uint8_t> blob) const {
     const uint blob_id = static_cast<uint>(blob_type);
     if (blob_id > max_blob_id) {
-        return StorageStatus::INVALID_ID;
+        return StorageStatus_e::InvalidId;
     }
 
     const uint8_t* blob_addr = get_blob_address(blob_id);
     if (!blob_addr)
-        return StorageStatus::ERROR;
+        return StorageStatus_e::Error;
 
     std::memcpy(blob.data(), blob_addr, blob.size());
 
-    return StorageStatus::SUCCESS;
+    return StorageStatus_e::Success;
 }
 
-StorageStatus Storage::_get_blob(uint blob_id, std::span<uint8_t> blob) const {
+StorageStatus_e Storage::_get_blob(uint blob_id, std::span<uint8_t> blob) const {
     if (blob_id > max_blob_id) {
-        return StorageStatus::INVALID_ID;
+        return StorageStatus_e::InvalidId;
     }
 
     const uint8_t* blob_addr = get_blob_address(blob_id);
     if (!blob_addr)
-        return StorageStatus::ERROR;
+        return StorageStatus_e::Error;
 
     std::memcpy(blob.data(), blob_addr, blob.size());
 
-    return StorageStatus::SUCCESS;
+    return StorageStatus_e::Success;
 }
 
-uint Storage::get_sector_id(BlobType blob_type) const {
+uint Storage::get_sector_id(BlobType_e blob_type) const {
     const uint blob_id = static_cast<uint>(blob_type);
     if (blob_id > max_blob_id) {
         return std::numeric_limits<unsigned int>::max();
@@ -122,54 +122,54 @@ uint Storage::get_sector_id(BlobType blob_type) const {
     return (blob_id / blobs_per_sector);
 }
 
-StorageStatus Storage::read_sector(uint sector_id) {
+StorageStatus_e Storage::read_sector(uint sector_id) {
     const uint start_blob_id = sector_id * blobs_per_sector;
     for (uint i = 0; i < blobs_per_sector; i++) {
-        StorageStatus status = _get_blob(start_blob_id + i, sector[i]);
-        if (status != StorageStatus::SUCCESS) {
+        StorageStatus_e status = _get_blob(start_blob_id + i, sector[i]);
+        if (status != StorageStatus_e::Success) {
             return status;
         }
     }
 
-    return StorageStatus::SUCCESS;
+    return StorageStatus_e::Success;
 }
 
-StorageStatus Storage::update_blob_in_sector(BlobType blob_type, std::span<uint8_t> blob) {
+StorageStatus_e Storage::update_blob_in_sector(BlobType_e blob_type, std::span<uint8_t> blob) {
     const uint blob_id = static_cast<uint>(blob_type);
     if (blob_id > max_blob_id) {
-        return StorageStatus::INVALID_ID;
+        return StorageStatus_e::InvalidId;
     }
 
     BlobBuff_t blob_copy{};
     std::copy(blob.begin(), blob.end(), blob_copy.begin());
 
     /* Fulfill rest of the sector with 0xFF */
-    if (blob.size() < BLOB_SLOT_SIZE_BYTES) {
-        std::memset(blob_copy.data() + blob.size(), 0xFF, BLOB_SLOT_SIZE_BYTES - blob.size());
+    if (blob.size() < kBlobSlotSizeBytes) {
+        std::memset(blob_copy.data() + blob.size(), 0xFF, kBlobSlotSizeBytes - blob.size());
     }
 
     sector[blob_id % blobs_per_sector] = std::move(blob_copy);
 
-    return StorageStatus::SUCCESS;
+    return StorageStatus_e::Success;
 }
 
 void Storage::save_sector(uint sector_id) const {
-    if (sector.size() * BLOB_SLOT_SIZE_BYTES != FLASH_SECTOR_SIZE) {
+    if (sector.size() * kBlobSlotSizeBytes != FLASH_SECTOR_SIZE) {
         return;
     }
-    const uintptr_t sector_addr = STORAGE_FLASH_OFFSET + (sector_id * FLASH_SECTOR_SIZE);
+    const uintptr_t sector_addr = kStorageFlashOffset + (sector_id * FLASH_SECTOR_SIZE);
 
     const uint32_t interrupts = save_and_disable_interrupts();
     flash_range_program(sector_addr, reinterpret_cast<const uint8_t*>(sector.data()), FLASH_SECTOR_SIZE);
     restore_interrupts(interrupts);
 }
 
-StorageStatus Storage::_save_blob(BlobType blob_type, std::span<uint8_t> blob) {
-    const uint blob_id   = static_cast<uint>(blob_type);
-    StorageStatus status = StorageStatus::ERROR;
+StorageStatus_e Storage::_save_blob(BlobType_e blob_type, std::span<uint8_t> blob) {
+    const uint blob_id     = static_cast<uint>(blob_type);
+    StorageStatus_e status = StorageStatus_e::Error;
 
     if (blob_id > max_blob_id) {
-        return StorageStatus::INVALID_ID;
+        return StorageStatus_e::InvalidId;
     }
 
     mutex_enter_blocking(&mutex);
@@ -178,12 +178,12 @@ StorageStatus Storage::_save_blob(BlobType blob_type, std::span<uint8_t> blob) {
 
     do {
         status = read_sector(sector_id);
-        if (StorageStatus::SUCCESS != status) {
+        if (StorageStatus_e::Success != status) {
             break;
         }
 
         status = update_blob_in_sector(blob_type, blob);
-        if (StorageStatus::SUCCESS != status) {
+        if (StorageStatus_e::Success != status) {
             break;
         }
 

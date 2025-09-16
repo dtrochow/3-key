@@ -30,12 +30,12 @@ static bool long_press_timer_callback(repeating_timer_t* timer);
 static uint get_key_id(uint gpio);
 
 /*     key_id, button_state  */
-std::map<uint, ButtonState_t> button_map;
+std::map<uint, ButtonState_t> button_map{};
 
-static KeysConfig* keys_gp = nullptr;
+static KeysConfig* gp_keys = nullptr;
 
 Buttons::Buttons(KeysConfig& keys_) : keys(keys_) {
-    keys_gp = &keys;
+    gp_keys = &keys;
 }
 
 void Buttons::init() {
@@ -44,15 +44,15 @@ void Buttons::init() {
     }
 }
 
-Key Buttons::get_pressed_key() const {
+Key_e Buttons::get_pressed_key() const {
     for (const auto& cfg : keys.get_key_cfgs()) {
-        if (auto key = std::get_if<Key>(&cfg.key_value)) {
+        if (auto key = std::get_if<Key_e>(&cfg.key_value)) {
             if (!gpio_get(cfg.gpio)) {
                 return *key;
             }
         }
     }
-    return Key::NONE;
+    return Key_e::KeyNone;
 }
 
 uint Buttons::get_pressed_key_id() const {
@@ -67,7 +67,7 @@ uint Buttons::get_pressed_key_id() const {
 uint8_t Buttons::get_modifier_flags() const {
     uint8_t modifier_flags = 0;
     for (const auto& cfg : keys.get_key_cfgs()) {
-        if (auto modifier = std::get_if<Modifier>(&cfg.key_value)) {
+        if (auto modifier = std::get_if<Modifier_e>(&cfg.key_value)) {
             if (!gpio_get(cfg.gpio)) {
                 modifier_flags |= static_cast<uint8_t>(*modifier);
             }
@@ -153,7 +153,7 @@ void gpio_callback(uint gpio, uint32_t events) {
             state.is_debouncing = true;
 
             repeating_timer_t* debounce_timer = new repeating_timer_t;
-            add_repeating_timer_ms(DEBOUNCE_DELAY_MS, debounce_timer_callback,
+            add_repeating_timer_ms(kDebounceDelayMs, debounce_timer_callback,
                 reinterpret_cast<void*>(gpio), debounce_timer);
 
             gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_FALL, false);
@@ -192,7 +192,7 @@ static bool long_press_timer_callback(repeating_timer_t* timer) {
         const uint64_t now        = to_ms_since_boot(get_absolute_time());
         const uint64_t elapsed_ms = (now - state.long_press_start_time);
 
-        if (elapsed_ms >= keys_gp->get_long_press_delay_ms()) {
+        if (elapsed_ms >= gp_keys->get_long_press_delay_ms()) {
             state.is_long_press     = true;
             state.is_pending_handle = true;
             state.is_debouncing     = false;

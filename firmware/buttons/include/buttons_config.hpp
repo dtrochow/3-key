@@ -31,23 +31,23 @@
 #include "leds_config.hpp"
 #include "pico/stdlib.h"
 
-enum Key : uint8_t {
-    C    = HID_KEY_C,
-    V    = HID_KEY_V,
-    NONE = HID_KEY_NONE,
+enum class Key_e : uint8_t {
+    C       = HID_KEY_C,
+    V       = HID_KEY_V,
+    KeyNone = HID_KEY_NONE,
 };
 
-enum Modifier : uint8_t {
-    LEFT_CMD  = KEYBOARD_MODIFIER_LEFTGUI,
-    LEFT_CTRL = KEYBOARD_MODIFIER_LEFTCTRL,
+enum class Modifier_e : uint8_t {
+    LeftCmd  = KEYBOARD_MODIFIER_LEFTGUI,
+    LeftCtrl = KEYBOARD_MODIFIER_LEFTCTRL,
 };
 
-using Button = std::variant<Key, Modifier>;
+using Button = std::variant<Key_e, Modifier_e>;
 
 struct ButtonConfig {
     uint button_id;
     uint gpio;
     Button key_value;
-    Color color;
+    Color_e color;
     bool enabled;
 };
