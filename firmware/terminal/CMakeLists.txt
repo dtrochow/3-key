@@ -12,6 +12,7 @@ target_link_libraries(${modulename}
         keyscfg
         features_handler
         time
+        math_example
 )
 
 # Apply the library-specific compile flags

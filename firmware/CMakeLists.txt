@@ -91,6 +91,8 @@ add_subdirectory(keyscfg)
 add_subdirectory(features)
 add_subdirectory(time)
 
+add_subdirectory(math)
+
 add_compile_options(${project_name} PUBLIC ${OPTIMIZATION_FLAGS})
 
 target_link_libraries(${project_name} PRIVATE

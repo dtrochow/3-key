@@ -21,12 +21,16 @@
 
 #include "terminal.hpp"
 #include "binary_mode.hpp"
+#include "math_example.h"
 
 Terminal::Terminal(Storage& storage, KeysConfig& keys, FeaturesHandler& f_handler, Time& time)
 : text_mode(storage, keys, f_handler), binary_mode(time, f_handler) {}
 
 std::span<uint8_t> Terminal::terminal(char byte) {
     binary_mode.check_binary_mode(static_cast<uint8_t>(byte));
+
+    const uint32_t sum = add(1, 3);
+    (void)sum;
 
     if (binary_mode.is_binary_mode()) {
         return binary_mode.handle(static_cast<uint8_t>(byte));
