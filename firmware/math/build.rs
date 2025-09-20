@@ -1,3 +1,1 @@
-fn main() {
-    println!("cargo:rustc-link-arg=-Wl,--noexecstack");
-}
+fn main() {}

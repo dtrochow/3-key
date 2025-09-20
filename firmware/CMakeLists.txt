@@ -50,6 +50,9 @@ add_executable(${project_name}
     ${CMAKE_CURRENT_LIST_DIR}/3-key.cpp
 )
 
+# Suppress executable stack warning from linker
+target_link_options(${project_name} PRIVATE -z noexecstack)
+
 target_include_directories(${project_name} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}
 )
