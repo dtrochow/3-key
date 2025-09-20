@@ -27,7 +27,7 @@ macro(define_rust_library LIB_NAME LIB_DIR LIB_TARGET)
 
     add_custom_command(
         OUTPUT ${RUST_LIB_PATH}
-        COMMAND cargo build --release --target ${RUST_TARGET}
+        COMMAND CARGO_TARGET_DIR=${LIB_DIR}/target cargo build --release --target ${RUST_TARGET}
         WORKING_DIRECTORY ${LIB_DIR}
         DEPENDS ${LIB_DIR}/Cargo.toml ${RUST_SRC_FILES}
         COMMENT "Building Rust static library ${LIB_NAME} for ${RUST_TARGET}"
