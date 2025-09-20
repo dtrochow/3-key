@@ -12,7 +12,7 @@ set(CBINDGEN_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/inc/math_example.h")
 set(RUST_LIB_NAME "math_example")
 set(RUST_TARGET "thumbv6m-none-eabi")
 set(RUST_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/target/${RUST_TARGET}/release/lib${RUST_LIB_NAME}.a")
-
+file(GLOB_RECURSE RUST_SRC_FILES "${RUST_CRATE_DIR}/*.rs")
 # Generate C header from Rust crate
 add_custom_target(math_example_clean
     COMMAND cargo clean
@@ -22,9 +22,9 @@ add_custom_target(math_example_clean
 
 add_custom_command(
     OUTPUT ${CBINDGEN_OUTPUT}
-    COMMAND ${CBINDGEN_EXECUTABLE} --config ${CBINDGEN_CONFIG} --crate ${RUST_LIB_NAME} --output ${CBINDGEN_OUTPUT}
+    COMMAND ${CBINDGEN_EXECUTABLE} --clean --config ${CBINDGEN_CONFIG} --crate ${RUST_LIB_NAME} --output ${CBINDGEN_OUTPUT}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS ${CBINDGEN_CONFIG} ${RUST_CRATE_DIR}
+    DEPENDS ${CBINDGEN_CONFIG} ${RUST_CRATE_DIR} ${RUST_SRC_FILES}
     COMMENT "Generating C header with cbindgen"
 )
 
