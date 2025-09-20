@@ -41,6 +41,11 @@ message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
 
 pico_sdk_init()
 
+# Find cbindgen program for the Rust libraries integration
+find_program(CBINDGEN_EXECUTABLE cbindgen REQUIRED)
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/RustLibrary.cmake")
+
 add_executable(${project_name}
     ${CMAKE_CURRENT_LIST_DIR}/3-key.cpp
 )
